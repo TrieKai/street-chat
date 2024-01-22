@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import {
   ICustomRenderer,
   RenderPass,
@@ -7,10 +8,11 @@ import {
   ViewerOptions,
   geodeticToEnu,
 } from "mapillary-js";
-import { useEffect, useRef } from "react";
 import {
   BoxGeometry,
   Camera,
+  Clock,
+  Color,
   Mesh,
   MeshBasicMaterial,
   Scene,
@@ -21,7 +23,7 @@ const makeCubeMesh = () => {
   const geometry = new BoxGeometry(2, 2, 2);
   const materials = [
     new MeshBasicMaterial({
-      color: 0xffff00,
+      color: new Color("orange").convertSRGBToLinear(),
     }),
     new MeshBasicMaterial({
       color: 0xff00ff,
@@ -61,10 +63,13 @@ class ThreeCubeRenderer implements ICustomRenderer {
   constructor(cube) {
     this.id = "three-cube-renderer";
     this.renderPass = RenderPass.Opaque;
+    this.clock = new Clock();
     this.cube = cube;
   }
 
   onAdd(viewer, reference, context) {
+    this.viewer = viewer;
+
     const position = geoToPosition(this.cube.geoPosition, reference);
     this.cube.mesh.position.fromArray(position);
 
@@ -91,13 +96,21 @@ class ThreeCubeRenderer implements ICustomRenderer {
     this.renderer.dispose();
   }
   render(context, viewMatrix, projectionMatrix) {
-    const { camera, scene, renderer } = this;
+    const { camera, clock, scene, cube, renderer, viewer } = this;
+
+    const delta = clock.getDelta();
+    const { rotationSpeed } = cube;
+    cube.mesh.rotateZ(rotationSpeed * delta);
+    cube.mesh.rotateY(0.7 * rotationSpeed * delta);
+
     camera.matrix.fromArray(viewMatrix).invert();
     camera.updateMatrixWorld(true);
     camera.projectionMatrix.fromArray(projectionMatrix);
 
     renderer.resetState();
     renderer.render(scene, camera);
+
+    viewer.triggerRerender();
   }
 }
 
@@ -125,9 +138,8 @@ export default function Home() {
 
     const cubeRenderer = new ThreeCubeRenderer(cube);
     viewer.addCustomRenderer(cubeRenderer);
-    viewer.moveTo(imageId).catch((err) => {
-      console.log(err);
-    });
+
+    viewer.moveTo(imageId).catch((error) => console.error(error));
   }, []);
 
   return (
