@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   ICustomRenderer,
+  IViewer,
+  LngLatAlt,
   RenderPass,
   Viewer,
   ViewerOptions,
@@ -13,38 +15,27 @@ import {
   Camera,
   Clock,
   Color,
+  Event,
   Mesh,
   MeshBasicMaterial,
+  Object3D,
+  PerspectiveCamera,
+  Raycaster,
   Scene,
+  Vector2,
   WebGLRenderer,
 } from "three";
 
 const makeCubeMesh = () => {
   const geometry = new BoxGeometry(2, 2, 2);
-  const materials = [
-    new MeshBasicMaterial({
-      color: new Color("orange").convertSRGBToLinear(),
-    }),
-    new MeshBasicMaterial({
-      color: 0xff00ff,
-    }),
-    new MeshBasicMaterial({
-      color: 0x00ff00,
-    }),
-    new MeshBasicMaterial({
-      color: 0x0000ff,
-    }),
-    new MeshBasicMaterial({
-      color: 0xffffff,
-    }),
-    new MeshBasicMaterial({
-      color: 0xff0000,
-    }),
-  ];
+  const materials = new MeshBasicMaterial({
+    color: new Color("orange").convertSRGBToLinear(),
+  });
+
   return new Mesh(geometry, materials);
 };
 
-function geoToPosition(geoPosition, reference) {
+function geoToPosition(geoPosition, reference: LngLatAlt) {
   const enuPosition = geodeticToEnu(
     geoPosition.lng,
     geoPosition.lat,
@@ -56,18 +47,52 @@ function geoToPosition(geoPosition, reference) {
   return enuPosition;
 }
 
+type Cube = {
+  geoPosition: {
+    alt: number;
+    lat: number;
+    lng: number;
+  };
+  mesh: Mesh;
+  rotationSpeed: number;
+};
+
 class ThreeCubeRenderer implements ICustomRenderer {
   id: string;
   renderPass: RenderPass;
+  clock: Clock;
+  viewer: Viewer;
+  renderer: WebGLRenderer;
+  scene: Scene;
+  cube: Cube;
+  raycaster: Raycaster;
+  pointer: Vector2;
+  camera: Camera;
+  isScaled: boolean;
 
-  constructor(cube) {
+  constructor(
+    scene: Scene,
+    cube: Cube,
+    raycaster: Raycaster,
+    pointer: Vector2
+  ) {
     this.id = "three-cube-renderer";
     this.renderPass = RenderPass.Opaque;
     this.clock = new Clock();
+    this.scene = scene;
     this.cube = cube;
+    this.raycaster = raycaster;
+    this.pointer = pointer;
+    this.camera = new PerspectiveCamera(
+      100,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    this.isScaled = false;
   }
 
-  onAdd(viewer, reference, context) {
+  onAdd(viewer: Viewer, reference: LngLatAlt, context) {
     this.viewer = viewer;
 
     const position = geoToPosition(this.cube.geoPosition, reference);
@@ -80,22 +105,22 @@ class ThreeCubeRenderer implements ICustomRenderer {
     });
     this.renderer.autoClear = false;
 
-    this.camera = new Camera();
     this.camera.matrixAutoUpdate = false;
 
-    this.scene = new Scene();
     this.scene.add(this.cube.mesh);
   }
-  onReference(viewer, reference) {
+  onReference(_viewer: IViewer, reference: LngLatAlt) {
     const position = geoToPosition(this.cube.geoPosition, reference);
     this.cube.mesh.position.fromArray(position);
   }
-  onRemove(_viewer, _context) {
+  onRemove(_viewer: IViewer, _context) {
     this.cube.mesh.geometry.dispose();
-    this.cube.mesh.material.forEach((m) => m.dispose());
+    if (Array.isArray(this.cube.mesh.material)) {
+      this.cube.mesh.material.forEach((m) => m.dispose());
+    }
     this.renderer.dispose();
   }
-  render(context, viewMatrix, projectionMatrix) {
+  render(_context, viewMatrix: number[], projectionMatrix: number[]) {
     const { camera, clock, scene, cube, renderer, viewer } = this;
 
     const delta = clock.getDelta();
@@ -107,6 +132,8 @@ class ThreeCubeRenderer implements ICustomRenderer {
     camera.updateMatrixWorld(true);
     camera.projectionMatrix.fromArray(projectionMatrix);
 
+    this.raycaster.setFromCamera(this.pointer, camera);
+
     renderer.resetState();
     renderer.render(scene, camera);
 
@@ -117,6 +144,11 @@ class ThreeCubeRenderer implements ICustomRenderer {
 export default function Home() {
   const mainRef = useRef<HTMLDivElement>(null);
 
+  const scene = useMemo(() => new Scene(), []);
+  const raycaster = useMemo(() => new Raycaster(), []);
+  const pointer = useMemo(() => new Vector2(), []);
+  const currentIntersect = useRef<Object3D<Event> | null>(null);
+
   useEffect(() => {
     const imageId = "3748064795322267";
     const options: ViewerOptions = {
@@ -126,7 +158,7 @@ export default function Home() {
     };
     const viewer = new Viewer(options);
 
-    const cube = {
+    const cube: Cube = {
       geoPosition: {
         alt: 1,
         lat: -25.28268614514251,
@@ -136,17 +168,48 @@ export default function Home() {
       rotationSpeed: 1,
     };
 
-    const cubeRenderer = new ThreeCubeRenderer(cube);
+    const cubeRenderer = new ThreeCubeRenderer(scene, cube, raycaster, pointer);
     viewer.addCustomRenderer(cubeRenderer);
 
     viewer.moveTo(imageId).catch((error) => console.error(error));
-  }, []);
+  }, [pointer, raycaster, scene]);
+
+  const onPointerMove = useCallback(
+    (event: PointerEvent) => {
+      pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      const intersects = raycaster.intersectObjects(scene.children);
+
+      if (intersects.length > 0) {
+        if (currentIntersect.current !== intersects[0].object) {
+          if (currentIntersect.current) {
+            currentIntersect.current.scale.set(1, 1, 1);
+          }
+          currentIntersect.current = intersects[0].object;
+          currentIntersect.current.scale.set(2, 2, 2);
+        }
+      } else {
+        if (currentIntersect.current) {
+          currentIntersect.current.scale.set(1, 1, 1);
+        }
+        currentIntersect.current = null;
+      }
+    },
+    [pointer, raycaster, scene.children]
+  );
+
+  useEffect(() => {
+    window.addEventListener("pointermove", onPointerMove);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+    };
+  }, [onPointerMove]);
 
   return (
     <main className="w-full h-full">
-      <div ref={mainRef} className="w-full h-full">
-        Mapillary
-      </div>
+      <div ref={mainRef} className="w-full h-full" />
     </main>
   );
 }
