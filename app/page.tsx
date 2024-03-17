@@ -7,6 +7,7 @@ import {
   LngLatAlt,
   RenderPass,
   Viewer,
+  ViewerMouseEvent,
   ViewerOptions,
   geodeticToEnu,
 } from "mapillary-js";
@@ -84,7 +85,6 @@ class ThreeCubeRenderer implements ICustomRenderer {
   raycaster: Raycaster;
   pointer: Vector2;
   camera: Camera;
-  isScaled: boolean;
 
   constructor(
     scene: Scene,
@@ -105,9 +105,11 @@ class ThreeCubeRenderer implements ICustomRenderer {
       0.1,
       1000
     );
-    this.isScaled = false;
   }
 
+  addCube(cube: Cube) {
+    this.cubes.push(cube);
+  }
   onAdd(viewer: Viewer, reference: LngLatAlt, context) {
     this.viewer = viewer;
 
@@ -173,7 +175,7 @@ export default function Home() {
   const currentIntersect = useRef<Object3D<Event> | null>(null);
 
   useEffect(() => {
-    const imageId = "758855944800782";
+    const imageId = "474314650500833";
     const options: ViewerOptions = {
       accessToken: process.env.MAPILLARY_ACCESS_TOKEN,
       component: { cover: false },
@@ -185,17 +187,8 @@ export default function Home() {
       {
         geoPosition: {
           alt: 1,
-          lat: 25.043135,
-          lng: 121.515098,
-        },
-        mesh: makeCubeMesh(),
-        rotationSpeed: 1,
-      },
-      {
-        geoPosition: {
-          alt: 1,
-          lat: 25.043265,
-          lng: 121.515112,
+          lat: 25.042838,
+          lng: 121.507388,
         },
         mesh: makeCubeMesh(),
         rotationSpeed: 1,
@@ -212,18 +205,8 @@ export default function Home() {
 
     viewer.moveTo(imageId).catch((error) => console.error(error));
 
-    return () => {
-      viewer.removeCustomRenderer(cubeRenderer.id);
-    };
-  }, [pointer, raycaster, scene]);
-
-  const onPointerMove = useCallback(
-    (event: PointerEvent) => {
-      pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
+    viewer.on("mousemove", (event: ViewerMouseEvent) => {
       const intersects = raycaster.intersectObjects(scene.children);
-
       if (intersects.length > 0) {
         if (currentIntersect.current !== intersects[0].object) {
           if (currentIntersect.current) {
@@ -238,8 +221,37 @@ export default function Home() {
         }
         currentIntersect.current = null;
       }
+    });
+    viewer.on("click", (event) => {
+      const intersects = raycaster.intersectObjects(scene.children);
+      if (intersects.length > 0) {
+        console.log("click", intersects[0].object);
+      } else {
+        viewer.removeCustomRenderer(cubeRenderer.id);
+        cubes.push({
+          geoPosition: {
+            alt: 1,
+            lat: event.lngLat.lat,
+            lng: event.lngLat.lng,
+          },
+          mesh: makeCubeMesh(),
+          rotationSpeed: 1,
+        });
+        viewer.addCustomRenderer(cubeRenderer);
+      }
+    });
+
+    return () => {
+      viewer.remove();
+    };
+  }, [pointer, raycaster, scene]);
+
+  const onPointerMove = useCallback(
+    (event: PointerEvent) => {
+      pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
     },
-    [pointer, raycaster, scene.children]
+    [pointer]
   );
 
   useEffect(() => {
