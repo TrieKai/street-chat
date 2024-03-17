@@ -14,7 +14,6 @@ import {
   BoxGeometry,
   Camera,
   Clock,
-  Color,
   Event,
   Mesh,
   MeshBasicMaterial,
@@ -28,9 +27,26 @@ import {
 
 const makeCubeMesh = () => {
   const geometry = new BoxGeometry(2, 2, 2);
-  const materials = new MeshBasicMaterial({
-    color: new Color("orange").convertSRGBToLinear(),
-  });
+  const materials = [
+    new MeshBasicMaterial({
+      color: 0xffff00,
+    }),
+    new MeshBasicMaterial({
+      color: 0xff00ff,
+    }),
+    new MeshBasicMaterial({
+      color: 0x00ff00,
+    }),
+    new MeshBasicMaterial({
+      color: 0x0000ff,
+    }),
+    new MeshBasicMaterial({
+      color: 0xffffff,
+    }),
+    new MeshBasicMaterial({
+      color: 0xff0000,
+    }),
+  ];
 
   return new Mesh(geometry, materials);
 };
@@ -64,7 +80,7 @@ class ThreeCubeRenderer implements ICustomRenderer {
   viewer: Viewer;
   renderer: WebGLRenderer;
   scene: Scene;
-  cube: Cube;
+  cubes: Cube[];
   raycaster: Raycaster;
   pointer: Vector2;
   camera: Camera;
@@ -72,7 +88,7 @@ class ThreeCubeRenderer implements ICustomRenderer {
 
   constructor(
     scene: Scene,
-    cube: Cube,
+    cubes: Cube[],
     raycaster: Raycaster,
     pointer: Vector2
   ) {
@@ -80,7 +96,7 @@ class ThreeCubeRenderer implements ICustomRenderer {
     this.renderPass = RenderPass.Opaque;
     this.clock = new Clock();
     this.scene = scene;
-    this.cube = cube;
+    this.cubes = cubes;
     this.raycaster = raycaster;
     this.pointer = pointer;
     this.camera = new PerspectiveCamera(
@@ -95,8 +111,11 @@ class ThreeCubeRenderer implements ICustomRenderer {
   onAdd(viewer: Viewer, reference: LngLatAlt, context) {
     this.viewer = viewer;
 
-    const position = geoToPosition(this.cube.geoPosition, reference);
-    this.cube.mesh.position.fromArray(position);
+    this.cubes.forEach((cube) => {
+      const position = geoToPosition(cube.geoPosition, reference);
+      cube.mesh.position.fromArray(position);
+      this.scene.add(cube.mesh);
+    });
 
     const canvas = viewer.getCanvas();
     this.renderer = new WebGLRenderer({
@@ -106,27 +125,31 @@ class ThreeCubeRenderer implements ICustomRenderer {
     this.renderer.autoClear = false;
 
     this.camera.matrixAutoUpdate = false;
-
-    this.scene.add(this.cube.mesh);
   }
   onReference(_viewer: IViewer, reference: LngLatAlt) {
-    const position = geoToPosition(this.cube.geoPosition, reference);
-    this.cube.mesh.position.fromArray(position);
+    this.cubes.forEach((cube) => {
+      const position = geoToPosition(cube.geoPosition, reference);
+      cube.mesh.position.fromArray(position);
+    });
   }
   onRemove(_viewer: IViewer, _context) {
-    this.cube.mesh.geometry.dispose();
-    if (Array.isArray(this.cube.mesh.material)) {
-      this.cube.mesh.material.forEach((m) => m.dispose());
-    }
+    this.cubes.forEach((cube) => {
+      cube.mesh.geometry.dispose();
+      if (Array.isArray(cube.mesh.material)) {
+        cube.mesh.material.forEach((m) => m.dispose());
+      }
+    });
     this.renderer.dispose();
   }
   render(_context, viewMatrix: number[], projectionMatrix: number[]) {
-    const { camera, clock, scene, cube, renderer, viewer } = this;
+    const { camera, clock, scene, cubes, renderer, viewer } = this;
 
     const delta = clock.getDelta();
-    const { rotationSpeed } = cube;
-    cube.mesh.rotateZ(rotationSpeed * delta);
-    cube.mesh.rotateY(0.7 * rotationSpeed * delta);
+    cubes.forEach((cube) => {
+      const { rotationSpeed } = cube;
+      cube.mesh.rotateZ(rotationSpeed * delta);
+      cube.mesh.rotateY(0.7 * rotationSpeed * delta);
+    });
 
     camera.matrix.fromArray(viewMatrix).invert();
     camera.updateMatrixWorld(true);
@@ -150,7 +173,7 @@ export default function Home() {
   const currentIntersect = useRef<Object3D<Event> | null>(null);
 
   useEffect(() => {
-    const imageId = "3748064795322267";
+    const imageId = "758855944800782";
     const options: ViewerOptions = {
       accessToken: process.env.MAPILLARY_ACCESS_TOKEN,
       component: { cover: false },
@@ -158,20 +181,40 @@ export default function Home() {
     };
     const viewer = new Viewer(options);
 
-    const cube: Cube = {
-      geoPosition: {
-        alt: 1,
-        lat: -25.28268614514251,
-        lng: -57.630922858385,
+    const cubes: Cube[] = [
+      {
+        geoPosition: {
+          alt: 1,
+          lat: 25.043135,
+          lng: 121.515098,
+        },
+        mesh: makeCubeMesh(),
+        rotationSpeed: 1,
       },
-      mesh: makeCubeMesh(),
-      rotationSpeed: 1,
-    };
+      {
+        geoPosition: {
+          alt: 1,
+          lat: 25.043265,
+          lng: 121.515112,
+        },
+        mesh: makeCubeMesh(),
+        rotationSpeed: 1,
+      },
+    ];
 
-    const cubeRenderer = new ThreeCubeRenderer(scene, cube, raycaster, pointer);
+    const cubeRenderer = new ThreeCubeRenderer(
+      scene,
+      cubes,
+      raycaster,
+      pointer
+    );
     viewer.addCustomRenderer(cubeRenderer);
 
     viewer.moveTo(imageId).catch((error) => console.error(error));
+
+    return () => {
+      viewer.removeCustomRenderer(cubeRenderer.id);
+    };
   }, [pointer, raycaster, scene]);
 
   const onPointerMove = useCallback(
@@ -187,7 +230,7 @@ export default function Home() {
             currentIntersect.current.scale.set(1, 1, 1);
           }
           currentIntersect.current = intersects[0].object;
-          currentIntersect.current.scale.set(2, 2, 2);
+          currentIntersect.current.scale.set(1.5, 1.5, 1.5);
         }
       } else {
         if (currentIntersect.current) {
