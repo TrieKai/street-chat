@@ -1,170 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import {
-  ICustomRenderer,
-  IViewer,
-  LngLatAlt,
-  RenderPass,
-  Viewer,
-  ViewerMouseEvent,
-  ViewerOptions,
-  geodeticToEnu,
-} from "mapillary-js";
-import {
-  BoxGeometry,
-  Camera,
-  Clock,
-  Event,
-  Mesh,
-  MeshBasicMaterial,
-  Object3D,
-  PerspectiveCamera,
-  Raycaster,
-  Scene,
-  Vector2,
-  WebGLRenderer,
-} from "three";
+import { Viewer, ViewerMouseEvent, ViewerOptions } from "mapillary-js";
+import { Event, Object3D, Raycaster, Scene, Vector2 } from "three";
 
-const makeCubeMesh = () => {
-  const geometry = new BoxGeometry(2, 2, 2);
-  const materials = [
-    new MeshBasicMaterial({
-      color: 0xffff00,
-    }),
-    new MeshBasicMaterial({
-      color: 0xff00ff,
-    }),
-    new MeshBasicMaterial({
-      color: 0x00ff00,
-    }),
-    new MeshBasicMaterial({
-      color: 0x0000ff,
-    }),
-    new MeshBasicMaterial({
-      color: 0xffffff,
-    }),
-    new MeshBasicMaterial({
-      color: 0xff0000,
-    }),
-  ];
-
-  return new Mesh(geometry, materials);
-};
-
-function geoToPosition(geoPosition, reference: LngLatAlt) {
-  const enuPosition = geodeticToEnu(
-    geoPosition.lng,
-    geoPosition.lat,
-    geoPosition.alt,
-    reference.lng,
-    reference.lat,
-    reference.alt
-  );
-  return enuPosition;
-}
-
-type Cube = {
-  geoPosition: {
-    alt: number;
-    lat: number;
-    lng: number;
-  };
-  mesh: Mesh;
-  rotationSpeed: number;
-};
-
-class ThreeCubeRenderer implements ICustomRenderer {
-  id: string;
-  renderPass: RenderPass;
-  clock: Clock;
-  viewer: Viewer;
-  renderer: WebGLRenderer;
-  scene: Scene;
-  cubes: Cube[];
-  raycaster: Raycaster;
-  pointer: Vector2;
-  camera: Camera;
-
-  constructor(
-    scene: Scene,
-    cubes: Cube[],
-    raycaster: Raycaster,
-    pointer: Vector2
-  ) {
-    this.id = "three-cube-renderer";
-    this.renderPass = RenderPass.Opaque;
-    this.clock = new Clock();
-    this.scene = scene;
-    this.cubes = cubes;
-    this.raycaster = raycaster;
-    this.pointer = pointer;
-    this.camera = new PerspectiveCamera(
-      100,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-  }
-
-  addCube(cube: Cube) {
-    this.cubes.push(cube);
-  }
-  onAdd(viewer: Viewer, reference: LngLatAlt, context) {
-    this.viewer = viewer;
-
-    this.cubes.forEach((cube) => {
-      const position = geoToPosition(cube.geoPosition, reference);
-      cube.mesh.position.fromArray(position);
-      this.scene.add(cube.mesh);
-    });
-
-    const canvas = viewer.getCanvas();
-    this.renderer = new WebGLRenderer({
-      canvas,
-      context,
-    });
-    this.renderer.autoClear = false;
-
-    this.camera.matrixAutoUpdate = false;
-  }
-  onReference(_viewer: IViewer, reference: LngLatAlt) {
-    this.cubes.forEach((cube) => {
-      const position = geoToPosition(cube.geoPosition, reference);
-      cube.mesh.position.fromArray(position);
-    });
-  }
-  onRemove(_viewer: IViewer, _context) {
-    this.cubes.forEach((cube) => {
-      cube.mesh.geometry.dispose();
-      if (Array.isArray(cube.mesh.material)) {
-        cube.mesh.material.forEach((m) => m.dispose());
-      }
-    });
-    this.renderer.dispose();
-  }
-  render(_context, viewMatrix: number[], projectionMatrix: number[]) {
-    const { camera, clock, scene, cubes, renderer, viewer } = this;
-
-    const delta = clock.getDelta();
-    cubes.forEach((cube) => {
-      const { rotationSpeed } = cube;
-      cube.mesh.rotateZ(rotationSpeed * delta);
-      cube.mesh.rotateY(0.7 * rotationSpeed * delta);
-    });
-
-    camera.matrix.fromArray(viewMatrix).invert();
-    camera.updateMatrixWorld(true);
-    camera.projectionMatrix.fromArray(projectionMatrix);
-
-    this.raycaster.setFromCamera(this.pointer, camera);
-
-    renderer.resetState();
-    renderer.render(scene, camera);
-
-    viewer.triggerRerender();
-  }
-}
+import { Cube, ThreeCubeRenderer } from "@/model/threeRenderer";
+import { createCubeMesh } from "@/helpers/three";
 
 export default function Home() {
   const mainRef = useRef<HTMLDivElement>(null);
@@ -190,7 +31,7 @@ export default function Home() {
           lat: 25.042838,
           lng: 121.507388,
         },
-        mesh: makeCubeMesh(),
+        mesh: createCubeMesh(),
         rotationSpeed: 1,
       },
     ];
@@ -205,7 +46,7 @@ export default function Home() {
 
     viewer.moveTo(imageId).catch((error) => console.error(error));
 
-    viewer.on("mousemove", (event: ViewerMouseEvent) => {
+    viewer.on("mousemove", (_event: ViewerMouseEvent) => {
       const intersects = raycaster.intersectObjects(scene.children);
       if (intersects.length > 0) {
         if (currentIntersect.current !== intersects[0].object) {
@@ -227,6 +68,10 @@ export default function Home() {
       if (intersects.length > 0) {
         console.log("click", intersects[0].object);
       } else {
+        if (!event.lngLat) {
+          return;
+        }
+
         viewer.removeCustomRenderer(cubeRenderer.id);
         cubes.push({
           geoPosition: {
@@ -234,7 +79,7 @@ export default function Home() {
             lat: event.lngLat.lat,
             lng: event.lngLat.lng,
           },
-          mesh: makeCubeMesh(),
+          mesh: createCubeMesh(),
           rotationSpeed: 1,
         });
         viewer.addCustomRenderer(cubeRenderer);
@@ -247,7 +92,7 @@ export default function Home() {
   }, [pointer, raycaster, scene]);
 
   const onPointerMove = useCallback(
-    (event: PointerEvent) => {
+    (event: PointerEvent): void => {
       pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
       pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
     },
