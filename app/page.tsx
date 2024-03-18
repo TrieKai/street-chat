@@ -6,6 +6,8 @@ import { Event, Object3D, Raycaster, Scene, Vector2 } from "three";
 
 import { Cube, ThreeCubeRenderer } from "@/model/threeRenderer";
 import { createCubeMesh } from "@/helpers/three";
+import { useGetChatRoomList } from "@/hooks/useChatRoom";
+import { db } from "@/lib/firebase/firebase";
 
 export default function Home() {
   const mainRef = useRef<HTMLDivElement>(null);
@@ -14,6 +16,8 @@ export default function Home() {
   const raycaster = useMemo(() => new Raycaster(), []);
   const pointer = useMemo(() => new Vector2(), []);
   const currentIntersect = useRef<Object3D<Event> | null>(null);
+
+  const { chatroomList } = useGetChatRoomList(db);
 
   useEffect(() => {
     const imageId = "474314650500833";
