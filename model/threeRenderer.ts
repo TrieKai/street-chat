@@ -59,7 +59,6 @@ export class ThreeCubeRenderer implements ICustomRenderer {
     );
   }
 
-  // ICustomRenderer methods
   onAdd(viewer: Viewer, reference: LngLatAlt, context: WebGL2RenderingContext) {
     this.viewer = viewer;
 
@@ -130,10 +129,5 @@ export class ThreeCubeRenderer implements ICustomRenderer {
     renderer.render(scene, camera);
 
     viewer.triggerRerender();
-  }
-
-  // custom methods
-  addCube(cube: Cube) {
-    this.cubes.push(cube);
   }
 }

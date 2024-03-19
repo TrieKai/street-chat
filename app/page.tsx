@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Viewer, ViewerMouseEvent, ViewerOptions } from "mapillary-js";
 import { Event, Object3D, Raycaster, Scene, Vector2 } from "three";
 
@@ -16,84 +16,91 @@ export default function Home() {
   const raycaster = useMemo(() => new Raycaster(), []);
   const pointer = useMemo(() => new Vector2(), []);
   const currentIntersect = useRef<Object3D<Event> | null>(null);
+  const [viewer, setViewer] = useState<Viewer | null>(null);
+
+  const imageId = "474314650500833";
 
   const { chatroomList } = useGetChatRoomList(db);
 
   useEffect(() => {
-    const imageId = "474314650500833";
     const options: ViewerOptions = {
       accessToken: process.env.MAPILLARY_ACCESS_TOKEN,
       component: { cover: false },
       container: mainRef.current ?? "",
     };
-    const viewer = new Viewer(options);
+    setViewer(new Viewer(options));
+  }, []);
 
-    const cubes: Cube[] = [
-      {
-        geoPosition: {
-          alt: 1,
-          lat: 25.042838,
-          lng: 121.507388,
-        },
-        mesh: createCubeMesh(),
-        rotationSpeed: 1,
-      },
-    ];
-
-    const cubeRenderer = new ThreeCubeRenderer(
-      scene,
-      cubes,
-      raycaster,
-      pointer
-    );
-    viewer.addCustomRenderer(cubeRenderer);
-
-    viewer.moveTo(imageId).catch((error) => console.error(error));
-
-    viewer.on("mousemove", (_event: ViewerMouseEvent) => {
-      const intersects = raycaster.intersectObjects(scene.children);
-      if (intersects.length > 0) {
-        if (currentIntersect.current !== intersects[0].object) {
-          if (currentIntersect.current) {
-            currentIntersect.current.scale.set(1, 1, 1);
-          }
-          currentIntersect.current = intersects[0].object;
-          currentIntersect.current.scale.set(1.5, 1.5, 1.5);
-        }
-      } else {
-        if (currentIntersect.current) {
-          currentIntersect.current.scale.set(1, 1, 1);
-        }
-        currentIntersect.current = null;
-      }
-    });
-    viewer.on("click", (event) => {
-      const intersects = raycaster.intersectObjects(scene.children);
-      if (intersects.length > 0) {
-        console.log("click", intersects[0].object);
-      } else {
-        if (!event.lngLat) {
-          return;
-        }
-
-        viewer.removeCustomRenderer(cubeRenderer.id);
-        cubes.push({
+  useEffect(() => {
+    if (viewer) {
+      const cubes: Cube[] = [
+        {
           geoPosition: {
             alt: 1,
-            lat: event.lngLat.lat,
-            lng: event.lngLat.lng,
+            lat: 25.042838,
+            lng: 121.507388,
           },
           mesh: createCubeMesh(),
           rotationSpeed: 1,
-        });
-        viewer.addCustomRenderer(cubeRenderer);
-      }
-    });
+        },
+      ];
+      const cubeRenderer = new ThreeCubeRenderer(
+        scene,
+        cubes,
+        raycaster,
+        pointer
+      );
+      viewer.addCustomRenderer(cubeRenderer);
+
+      viewer.moveTo(imageId).catch((error) => console.error(error));
+
+      viewer.on("mousemove", (_event: ViewerMouseEvent) => {
+        const intersects = raycaster.intersectObjects(scene.children);
+        if (intersects.length > 0) {
+          if (currentIntersect.current !== intersects[0].object) {
+            if (currentIntersect.current) {
+              currentIntersect.current.scale.set(1, 1, 1);
+            }
+            currentIntersect.current = intersects[0].object;
+            currentIntersect.current.scale.set(1.5, 1.5, 1.5);
+          }
+        } else {
+          if (currentIntersect.current) {
+            currentIntersect.current.scale.set(1, 1, 1);
+          }
+          currentIntersect.current = null;
+        }
+      });
+      viewer.on("click", (event) => {
+        const intersects = raycaster.intersectObjects(scene.children);
+        if (intersects.length > 0) {
+          console.log("click", intersects[0].object);
+        } else {
+          if (!event.lngLat) {
+            return;
+          }
+
+          viewer.removeCustomRenderer(cubeRenderer.id);
+          cubes.push({
+            geoPosition: {
+              alt: 1,
+              lat: event.lngLat.lat,
+              lng: event.lngLat.lng,
+            },
+            mesh: createCubeMesh(),
+            rotationSpeed: 1,
+          });
+          viewer.addCustomRenderer(cubeRenderer);
+        }
+      });
+    }
 
     return () => {
-      viewer.remove();
+      if (viewer) {
+        viewer.remove();
+      }
     };
-  }, [pointer, raycaster, scene]);
+  }, [pointer, raycaster, scene, viewer]);
 
   const onPointerMove = useCallback(
     (event: PointerEvent): void => {
