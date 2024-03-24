@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Viewer, ViewerMouseEvent, ViewerOptions } from "mapillary-js";
 import { Event, Object3D, Raycaster, Scene, Vector2 } from "three";
+import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 
 import { Cube, ThreeCubeRenderer } from "@/model/threeRenderer";
 import { createCubeMesh } from "@/helpers/three";
 import { useGetChatRoomList } from "@/hooks/useChatRoom";
-import { db } from "@/lib/firebase/firebase";
+import { auth, db, provider } from "@/lib/firebase/firebase";
 
 export default function Home() {
   const mainRef = useRef<HTMLDivElement>(null);
@@ -17,6 +18,7 @@ export default function Home() {
   const pointer = useMemo(() => new Vector2(), []);
   const currentIntersect = useRef<Object3D<Event> | null>(null);
   const [viewer, setViewer] = useState<Viewer | null>(null);
+  const cubes = useRef<Cube[]>([]);
 
   const imageId = "474314650500833";
 
@@ -33,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     if (viewer) {
-      const cubes: Cube[] = [
+      cubes.current = [
         {
           geoPosition: {
             alt: 1,
@@ -46,7 +48,7 @@ export default function Home() {
       ];
       const cubeRenderer = new ThreeCubeRenderer(
         scene,
-        cubes,
+        cubes.current,
         raycaster,
         pointer
       );
@@ -80,17 +82,30 @@ export default function Home() {
             return;
           }
 
-          viewer.removeCustomRenderer(cubeRenderer.id);
-          cubes.push({
-            geoPosition: {
-              alt: 1,
-              lat: event.lngLat.lat,
-              lng: event.lngLat.lng,
-            },
-            mesh: createCubeMesh(),
-            rotationSpeed: 1,
-          });
-          viewer.addCustomRenderer(cubeRenderer);
+          try {
+            onAuthStateChanged(auth, (user) => {
+              if (user) {
+                console.log(user);
+                viewer.removeCustomRenderer(cubeRenderer.id);
+                cubes.current.push({
+                  geoPosition: {
+                    alt: 1,
+                    lat: event.lngLat.lat,
+                    lng: event.lngLat.lng,
+                  },
+                  mesh: createCubeMesh(),
+                  rotationSpeed: 1,
+                });
+                viewer.addCustomRenderer(cubeRenderer);
+              } else {
+                signInWithPopup(auth, provider).catch((error) => {
+                  throw new Error(error);
+                });
+              }
+            });
+          } catch (error) {
+            console.log(error);
+          }
         }
       });
     }

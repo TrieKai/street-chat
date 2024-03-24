@@ -45,7 +45,6 @@ export const useGetChatRoomList = (
   }, [db]);
 
   useEffect(() => {
-    console.log("getChatRoomList");
     getChatRoomList();
   }, [getChatRoomList]);
 
