@@ -26,7 +26,7 @@ export default function Home() {
 
   useEffect(() => {
     const options: ViewerOptions = {
-      accessToken: process.env.MAPILLARY_ACCESS_TOKEN,
+      accessToken: process.env.NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN,
       component: { cover: false },
       container: mainRef.current ?? "",
     };
