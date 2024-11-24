@@ -3,14 +3,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Viewer, ViewerMouseEvent, ViewerOptions } from "mapillary-js";
 import { Event, Object3D, Raycaster, Scene, Vector2 } from "three";
-import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
+import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
 
 import { Cube, ThreeCubeRenderer } from "@/model/threeRenderer";
 import { createCubeMesh } from "@/helpers/three";
 import { useGetChatRoomList } from "@/hooks/useChatRoom";
 import { auth, db, provider } from "@/lib/firebase/firebase";
+import { createChatroom } from "@/helpers/chatroom";
+import { useRouter } from "next/navigation";
+import { Chatroom } from "@/type/chatroom";
+
+const ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN;
+const IMAGE_ID = "474314650500833"; // Ximending
 
 export default function Home() {
+  const router = useRouter();
   const mainRef = useRef<HTMLDivElement>(null);
 
   const scene = useMemo(() => new Scene(), []);
@@ -20,13 +27,11 @@ export default function Home() {
   const [viewer, setViewer] = useState<Viewer | null>(null);
   const cubes = useRef<Cube[]>([]);
 
-  const imageId = "474314650500833";
-
   const { chatroomList } = useGetChatRoomList(db);
 
   useEffect(() => {
     const options: ViewerOptions = {
-      accessToken: process.env.NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN,
+      accessToken: ACCESS_TOKEN,
       component: { cover: false },
       container: mainRef.current ?? "",
     };
@@ -34,18 +39,21 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (viewer) {
-      cubes.current = [
-        {
+    const shouldRenderCubes = viewer && chatroomList.length > 0;
+    if (shouldRenderCubes) {
+      cubes.current = chatroomList.map((chatroom) => {
+        const chatroomData = chatroom.data() as Chatroom;
+        return {
           geoPosition: {
             alt: 1,
-            lat: 25.042838,
-            lng: 121.507388,
+            lat: chatroomData.position.latitude,
+            lng: chatroomData.position.longitude,
           },
           mesh: createCubeMesh(),
           rotationSpeed: 1,
-        },
-      ];
+        };
+      });
+
       const cubeRenderer = new ThreeCubeRenderer(
         scene,
         cubes.current,
@@ -54,7 +62,7 @@ export default function Home() {
       );
       viewer.addCustomRenderer(cubeRenderer);
 
-      viewer.moveTo(imageId).catch((error) => console.error(error));
+      void viewer.moveTo(IMAGE_ID).catch((error) => console.error(error));
 
       viewer.on("mousemove", (_event: ViewerMouseEvent) => {
         const intersects = raycaster.intersectObjects(scene.children);
@@ -73,7 +81,7 @@ export default function Home() {
           currentIntersect.current = null;
         }
       });
-      viewer.on("click", (event) => {
+      viewer.on("click", async (event) => {
         const intersects = raycaster.intersectObjects(scene.children);
         if (intersects.length > 0) {
           console.log("click", intersects[0].object);
@@ -83,39 +91,49 @@ export default function Home() {
           }
 
           try {
-            onAuthStateChanged(auth, (user) => {
-              if (user) {
-                console.log(user);
-                viewer.removeCustomRenderer(cubeRenderer.id);
-                cubes.current.push({
-                  geoPosition: {
-                    alt: 1,
-                    lat: event.lngLat.lat,
-                    lng: event.lngLat.lng,
-                  },
-                  mesh: createCubeMesh(),
-                  rotationSpeed: 1,
-                });
-                viewer.addCustomRenderer(cubeRenderer);
-              } else {
-                signInWithPopup(auth, provider).catch((error) => {
-                  throw new Error(error);
-                });
-              }
+            const user = await new Promise<User | null>((resolve) => {
+              onAuthStateChanged(auth, (user) => resolve(user));
             });
+
+            if (!user) {
+              await signInWithPopup(auth, provider);
+              return;
+            }
+
+            const chatroomId = await createChatroom(
+              "test", // TODO: should be user input chatroom name
+              event.lngLat.lat,
+              event.lngLat.lng,
+              user
+            );
+
+            viewer.removeCustomRenderer(cubeRenderer.id);
+            cubes.current.push({
+              geoPosition: {
+                alt: 1,
+                lat: event.lngLat.lat,
+                lng: event.lngLat.lng,
+              },
+              mesh: createCubeMesh(),
+              rotationSpeed: 1,
+            });
+            viewer.addCustomRenderer(cubeRenderer);
+
+            // Redirect to chatroom page
+            void router.push(`/${chatroomId}`);
           } catch (error) {
-            console.log(error);
+            console.error("Error creating chatroom:", error);
           }
         }
       });
     }
 
     return () => {
-      if (viewer) {
+      if (shouldRenderCubes) {
         viewer.remove();
       }
     };
-  }, [pointer, raycaster, scene, viewer]);
+  }, [chatroomList, pointer, raycaster, router, scene, viewer]);
 
   const onPointerMove = useCallback(
     (event: PointerEvent): void => {

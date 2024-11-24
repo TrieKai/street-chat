@@ -21,6 +21,7 @@ export const useGetChatRoomList = (
   >([]);
 
   const getChatRoomList = useCallback(async (): Promise<void> => {
+    // TODO: set search radius
     // const NE = new GeoPoint(
     //   defaultPosition.lat + 0.001,
     //   defaultPosition.lng + 0.001
@@ -45,7 +46,7 @@ export const useGetChatRoomList = (
   }, [db]);
 
   useEffect(() => {
-    getChatRoomList();
+    void getChatRoomList();
   }, [getChatRoomList]);
 
   return { chatroomList };
