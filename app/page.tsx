@@ -12,6 +12,7 @@ import { auth, db, provider } from "@/lib/firebase/firebase";
 import { createChatroom } from "@/helpers/chatroom";
 import { useRouter } from "next/navigation";
 import { Chatroom } from "@/type/chatroom";
+import CreateChatroomModal from "@/app/components/CreateChatroomModal";
 
 const ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN;
 const IMAGE_ID = "474314650500833"; // Ximending
@@ -28,6 +29,72 @@ export default function Home() {
   const cubes = useRef<Cube[]>([]);
 
   const { chatroomList } = useGetChatRoomList(db);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pendingLocation, setPendingLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+
+  const onPointerMove = useCallback(
+    (event: PointerEvent): void => {
+      pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    },
+    [pointer]
+  );
+
+  const handleCreateChatroom = useCallback(
+    async (name: string): Promise<void> => {
+      if (!pendingLocation || !viewer) return;
+
+      try {
+        const user = await new Promise<User | null>((resolve) => {
+          onAuthStateChanged(auth, (user) => resolve(user));
+        });
+
+        if (!user) return;
+
+        const chatroomId = await createChatroom(
+          name,
+          pendingLocation.lat,
+          pendingLocation.lng,
+          user
+        );
+
+        cubes.current.push({
+          geoPosition: {
+            alt: 1,
+            lat: pendingLocation.lat,
+            lng: pendingLocation.lng,
+          },
+          mesh: createCubeMesh(chatroomId),
+          rotationSpeed: 1,
+          chatroomId,
+        });
+
+        const newCubeRenderer = new ThreeCubeRenderer(
+          scene,
+          cubes.current,
+          raycaster,
+          pointer
+        );
+        viewer.addCustomRenderer(newCubeRenderer);
+
+        setIsModalOpen(false);
+        setPendingLocation(null);
+        void router.push(`/${chatroomId}`);
+      } catch (error) {
+        console.error("Error creating chatroom:", error);
+      }
+    },
+    [pendingLocation, pointer, raycaster, router, scene, viewer]
+  );
+
+  const handleCloseModal = useCallback((): void => {
+    setIsModalOpen(false);
+    setPendingLocation(null);
+  }, []);
 
   useEffect(() => {
     const options: ViewerOptions = {
@@ -49,8 +116,9 @@ export default function Home() {
             lat: chatroomData.position.latitude,
             lng: chatroomData.position.longitude,
           },
-          mesh: createCubeMesh(),
+          mesh: createCubeMesh(chatroom.id),
           rotationSpeed: 1,
+          chatroomId: chatroom.id,
         };
       });
 
@@ -84,7 +152,7 @@ export default function Home() {
       viewer.on("click", async (event) => {
         const intersects = raycaster.intersectObjects(scene.children);
         if (intersects.length > 0) {
-          console.log("click", intersects[0].object);
+          void router.push(`/${intersects[0].object.userData.chatroomId}`);
         } else {
           if (!event.lngLat) {
             return;
@@ -100,29 +168,13 @@ export default function Home() {
               return;
             }
 
-            const chatroomId = await createChatroom(
-              "test", // TODO: should be user input chatroom name
-              event.lngLat.lat,
-              event.lngLat.lng,
-              user
-            );
-
-            viewer.removeCustomRenderer(cubeRenderer.id);
-            cubes.current.push({
-              geoPosition: {
-                alt: 1,
-                lat: event.lngLat.lat,
-                lng: event.lngLat.lng,
-              },
-              mesh: createCubeMesh(),
-              rotationSpeed: 1,
+            setPendingLocation({
+              lat: event.lngLat.lat,
+              lng: event.lngLat.lng,
             });
-            viewer.addCustomRenderer(cubeRenderer);
-
-            // Redirect to chatroom page
-            void router.push(`/${chatroomId}`);
+            setIsModalOpen(true);
           } catch (error) {
-            console.error("Error creating chatroom:", error);
+            console.error("Error:", error);
           }
         }
       });
@@ -135,14 +187,6 @@ export default function Home() {
     };
   }, [chatroomList, pointer, raycaster, router, scene, viewer]);
 
-  const onPointerMove = useCallback(
-    (event: PointerEvent): void => {
-      pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    },
-    [pointer]
-  );
-
   useEffect(() => {
     window.addEventListener("pointermove", onPointerMove);
 
@@ -154,6 +198,11 @@ export default function Home() {
   return (
     <main className="w-full h-full">
       <div ref={mainRef} className="w-full h-full" />
+      <CreateChatroomModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleCreateChatroom}
+      />
     </main>
   );
 }

@@ -1,6 +1,6 @@
 import { BoxGeometry, Mesh, MeshBasicMaterial } from "three";
 
-export const createCubeMesh = (): Mesh<BoxGeometry, MeshBasicMaterial[]> => {
+export const createCubeMesh = (chatroomId: string): Mesh<BoxGeometry, MeshBasicMaterial[]> => {
   const geometry = new BoxGeometry(2, 2, 2);
   const materials = [
     new MeshBasicMaterial({
@@ -23,5 +23,7 @@ export const createCubeMesh = (): Mesh<BoxGeometry, MeshBasicMaterial[]> => {
     }),
   ];
 
-  return new Mesh(geometry, materials);
+  const mesh = new Mesh(geometry, materials);
+  mesh.userData.chatroomId = chatroomId;
+  return mesh;
 };

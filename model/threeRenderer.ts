@@ -24,14 +24,15 @@ export type Cube = {
   geoPosition: GeoPosition;
   mesh: Mesh;
   rotationSpeed: number;
+  chatroomId: string;
 };
 
 export class ThreeCubeRenderer implements ICustomRenderer {
   id: string;
   renderPass: RenderPass;
   clock: Clock;
-  viewer: Viewer;
-  renderer: WebGLRenderer;
+  viewer: Viewer | null;
+  renderer: WebGLRenderer | null;
   scene: Scene;
   cubes: Cube[];
   raycaster: Raycaster;
@@ -47,6 +48,8 @@ export class ThreeCubeRenderer implements ICustomRenderer {
     this.id = "three-cube-renderer";
     this.renderPass = RenderPass.Opaque;
     this.clock = new Clock();
+    this.viewer = null;
+    this.renderer = null;
     this.scene = scene;
     this.cubes = cubes;
     this.raycaster = raycaster;
@@ -94,7 +97,7 @@ export class ThreeCubeRenderer implements ICustomRenderer {
         cube.mesh.material.forEach((m) => m.dispose());
       }
     });
-    renderer.dispose();
+    renderer?.dispose();
   }
   render(
     _context: WebGL2RenderingContext,
@@ -125,9 +128,9 @@ export class ThreeCubeRenderer implements ICustomRenderer {
 
     raycaster.setFromCamera(pointer, camera);
 
-    renderer.resetState();
-    renderer.render(scene, camera);
+    renderer?.resetState();
+    renderer?.render(scene, camera);
 
-    viewer.triggerRerender();
+    viewer?.triggerRerender();
   }
 }
