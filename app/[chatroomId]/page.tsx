@@ -1,8 +1,8 @@
+import Chatroom from "@/app/components/Chatroom";
 import { Props } from "./type";
 
-export default function Chatroom({ params }: Props) {
-  const { chatroomId } = params;
-  console.log(chatroomId);
+export default async function Page({ params }: Props) {
+  const { chatroomId } = await params;
 
-  return <main className="w-full h-full"></main>;
+  return <Chatroom chatroomId={chatroomId} />;
 }

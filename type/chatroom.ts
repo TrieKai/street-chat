@@ -15,6 +15,13 @@ export interface Message {
   timestamp: number;
 }
 
+export interface User {
+  messaging_token: string;
+  photo_url: string;
+  user_id: string;
+  user_name: string;
+}
+
 export interface Users {
   user_id: string;
   user_name: string;

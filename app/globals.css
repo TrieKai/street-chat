@@ -32,3 +32,43 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+/* basic format */
+.mention {
+  color: #1da1f2;
+  font-weight: 500;
+}
+
+.hashtag {
+  color: #1da1f2;
+}
+
+.emoji {
+  font-style: normal;
+}
+
+/* code block */
+pre {
+  background: #f6f8fa;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+code {
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+/* dark mode */
+@media (prefers-color-scheme: dark) {
+  pre {
+    background: #1e1e1e;
+  }
+  code {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}

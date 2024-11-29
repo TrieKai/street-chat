@@ -1,5 +1,5 @@
 export type Props = {
-  params: {
+  params: Promise<{
     chatroomId: string;
-  };
+  }>;
 };
