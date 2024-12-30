@@ -81,7 +81,7 @@ export default function ChatroomClient({ chatroomId }: Props) {
 
   return (
     <main className="w-full h-screen flex flex-col">
-      <header className="p-4 border-b border-gray-200 bg-white">
+      <header className="p-4 h-16 border-b border-gray-200 bg-white">
         <h1 className="text-xl font-semibold">{chatroomName}</h1>
       </header>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
