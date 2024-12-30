@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Message as ChatMessage, User } from "@/type/chatroom";
 import { auth, db } from "@/lib/firebase/firebase";
 import {
@@ -13,16 +13,44 @@ import {
 import { onAuthStateChanged } from "firebase/auth";
 import MessageBubble from "./Message";
 
+import { SendIcon } from "@/app/icons";
+
 type Props = {
   chatroomId: string;
 };
 
 export default function ChatroomClient({ chatroomId }: Props) {
+  const [chatroomName, setChatroomName] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [userName, setUserName] = useState("");
   const [userId, setUserId] = useState("");
   const [users, setUsers] = useState<User[]>([]);
+
+  const handleSendMessage = useCallback(
+    async (e: React.FormEvent): Promise<void> => {
+      e.preventDefault();
+      if (!newMessage.trim() || !userId) return;
+
+      const message: ChatMessage = {
+        user_id: userId,
+        user_name: userName,
+        text: newMessage,
+        timestamp: Date.now(),
+      };
+
+      try {
+        const chatroomRef = doc(collection(db, "chatrooms"), chatroomId);
+        await updateDoc(chatroomRef, {
+          messages: arrayUnion(message),
+        });
+        setNewMessage("");
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    },
+    [chatroomId, newMessage, userId, userName]
+  );
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -40,6 +68,7 @@ export default function ChatroomClient({ chatroomId }: Props) {
           console.log(data);
           setMessages(data.messages || []);
           setUsers(data.users || []);
+          setChatroomName(data.name || "Chat Room");
         }
       }
     );
@@ -50,30 +79,11 @@ export default function ChatroomClient({ chatroomId }: Props) {
     };
   }, [chatroomId]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !userId) return;
-
-    const message: ChatMessage = {
-      user_id: userId,
-      user_name: userName,
-      text: newMessage,
-      timestamp: Date.now(),
-    };
-
-    try {
-      const chatroomRef = doc(collection(db, "chatrooms"), chatroomId);
-      await updateDoc(chatroomRef, {
-        messages: arrayUnion(message),
-      });
-      setNewMessage("");
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
-
   return (
     <main className="w-full h-screen flex flex-col">
+      <header className="p-4 border-b border-gray-200 bg-white">
+        <h1 className="text-xl font-semibold">{chatroomName}</h1>
+      </header>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message, index) => {
           const userInfo = users.find(
@@ -106,8 +116,9 @@ export default function ChatroomClient({ chatroomId }: Props) {
         <button
           type="submit"
           className="bg-blue-500 text-white rounded-full px-6 py-2 hover:bg-blue-600 transition-colors"
+          title="送出"
         >
-          Send
+          <SendIcon />
         </button>
       </form>
     </main>
