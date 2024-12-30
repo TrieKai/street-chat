@@ -13,6 +13,7 @@ import { createChatroom } from "@/helpers/chatroom";
 import { useRouter } from "next/navigation";
 import { Chatroom } from "@/type/chatroom";
 import CreateChatroomModal from "@/app/components/CreateChatroomModal";
+import { getDistanceFromLatLonInMeters } from "@/helpers/distance";
 
 const ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN;
 const IMAGE_ID = "474314650500833"; // Ximending
@@ -38,8 +39,12 @@ export default function Home() {
 
   const onPointerMove = useCallback(
     (event: PointerEvent): void => {
-      pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      if (!mainRef.current) return;
+
+      // use the element's actual size and position, not the entire viewport
+      const rect = mainRef.current.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     },
     [pointer]
   );
@@ -155,6 +160,25 @@ export default function Home() {
           void router.push(`/${intersects[0].object.userData.chatroomId}`);
         } else {
           if (!event.lngLat) {
+            return;
+          }
+
+          // get the current view position
+          const viewerPosition = await viewer.getPosition();
+          if (!viewerPosition) {
+            return;
+          }
+
+          // calculate the distance between the click position and the viewing angle
+          const distance = getDistanceFromLatLonInMeters(
+            viewerPosition.lat,
+            viewerPosition.lng,
+            event.lngLat.lat,
+            event.lngLat.lng
+          );
+
+          if (distance > 10) {
+            alert("只能在當前位置方圓 10 公尺內建立聊天室");
             return;
           }
 
