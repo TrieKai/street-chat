@@ -76,6 +76,7 @@ export default function Home() {
           mesh: createCubeMesh(chatroomId),
           rotationSpeed: 1,
           chatroomId,
+          name,
         });
 
         const newCubeRenderer = new ThreeCubeRenderer(
@@ -111,102 +112,110 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const shouldRenderCubes = viewer && chatroomList.length > 0;
-    if (shouldRenderCubes) {
-      cubes.current = chatroomList.map((chatroom) => {
-        const chatroomData = chatroom.data() as Chatroom;
-        return {
-          geoPosition: {
-            alt: 1,
-            lat: chatroomData.position.latitude,
-            lng: chatroomData.position.longitude,
-          },
-          mesh: createCubeMesh(chatroom.id),
-          rotationSpeed: 1,
-          chatroomId: chatroom.id,
-        };
-      });
+    if (!viewer) {
+      return;
+    }
 
-      const cubeRenderer = new ThreeCubeRenderer(
-        scene,
-        cubes.current,
-        raycaster,
-        pointer
-      );
-      viewer.addCustomRenderer(cubeRenderer);
+    cubes.current = chatroomList.map((chatroom) => {
+      const chatroomData = chatroom.data() as Chatroom;
+      console.log("chatroomData", chatroomData);
+      return {
+        geoPosition: {
+          alt: 1,
+          lat: chatroomData.position.latitude,
+          lng: chatroomData.position.longitude,
+        },
+        mesh: createCubeMesh(chatroom.id),
+        rotationSpeed: 1,
+        chatroomId: chatroom.id,
+        name: chatroomData.name,
+      };
+    });
 
-      void viewer.moveTo(IMAGE_ID).catch((error) => console.error(error));
+    const cubeRenderer = new ThreeCubeRenderer(
+      scene,
+      cubes.current,
+      raycaster,
+      pointer
+    );
 
-      viewer.on("mousemove", (_event: ViewerMouseEvent) => {
-        const intersects = raycaster.intersectObjects(scene.children);
-        if (intersects.length > 0) {
-          if (currentIntersect.current !== intersects[0].object) {
-            if (currentIntersect.current) {
-              currentIntersect.current.scale.set(1, 1, 1);
-            }
-            currentIntersect.current = intersects[0].object;
-            currentIntersect.current.scale.set(1.5, 1.5, 1.5);
-          }
-        } else {
+    viewer.addCustomRenderer(cubeRenderer);
+
+    const handleMouseOver = (_event: ViewerMouseEvent): void => {
+      const intersects = raycaster.intersectObjects(scene.children);
+      if (intersects.length > 0) {
+        if (currentIntersect.current !== intersects[0].object) {
           if (currentIntersect.current) {
             currentIntersect.current.scale.set(1, 1, 1);
           }
-          currentIntersect.current = null;
+          currentIntersect.current = intersects[0].object;
+          currentIntersect.current.scale.set(1.2, 1.2, 1.2);
         }
-      });
-      viewer.on("click", async (event) => {
-        const intersects = raycaster.intersectObjects(scene.children);
-        if (intersects.length > 0) {
-          void router.push(`/${intersects[0].object.userData.chatroomId}`);
-        } else {
-          if (!event.lngLat) {
-            return;
-          }
-
-          // get the current view position
-          const viewerPosition = await viewer.getPosition();
-          if (!viewerPosition) {
-            return;
-          }
-
-          // calculate the distance between the click position and the viewing angle
-          const distance = getDistanceFromLatLonInMeters(
-            viewerPosition.lat,
-            viewerPosition.lng,
-            event.lngLat.lat,
-            event.lngLat.lng
-          );
-
-          if (distance > 10) {
-            alert("只能在當前位置方圓 10 公尺內建立聊天室");
-            return;
-          }
-
-          try {
-            const user = await new Promise<User | null>((resolve) => {
-              onAuthStateChanged(auth, (user) => resolve(user));
-            });
-
-            if (!user) {
-              await signInWithPopup(auth, provider);
-              return;
-            }
-
-            setPendingLocation({
-              lat: event.lngLat.lat,
-              lng: event.lngLat.lng,
-            });
-            setIsModalOpen(true);
-          } catch (error) {
-            console.error("Error:", error);
-          }
+      } else {
+        if (currentIntersect.current) {
+          currentIntersect.current.scale.set(1, 1, 1);
         }
-      });
-    }
+        currentIntersect.current = null;
+      }
+    };
+
+    const handleClick = async (event: ViewerMouseEvent): Promise<void> => {
+      const intersects = raycaster.intersectObjects(scene.children);
+      if (intersects.length > 0) {
+        void router.push(`/${intersects[0].object.userData.chatroomId}`);
+      } else {
+        if (!event.lngLat) {
+          return;
+        }
+
+        // get the current view position
+        const viewerPosition = await viewer.getPosition();
+        if (!viewerPosition) {
+          return;
+        }
+
+        // calculate the distance between the click position and the viewing angle
+        const distance = getDistanceFromLatLonInMeters(
+          viewerPosition.lat,
+          viewerPosition.lng,
+          event.lngLat.lat,
+          event.lngLat.lng
+        );
+
+        if (distance > 10) {
+          alert("只能在當前位置方圓 10 公尺內建立聊天室");
+          return;
+        }
+
+        try {
+          const user = await new Promise<User | null>((resolve) => {
+            onAuthStateChanged(auth, (user) => resolve(user));
+          });
+
+          if (!user) {
+            await signInWithPopup(auth, provider);
+            return;
+          }
+
+          setPendingLocation({
+            lat: event.lngLat.lat,
+            lng: event.lngLat.lng,
+          });
+          setIsModalOpen(true);
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+    };
+
+    viewer.on("mousemove", handleMouseOver);
+    viewer.on("click", handleClick);
 
     return () => {
-      if (shouldRenderCubes) {
-        viewer.remove();
+      if (viewer) {
+        viewer.removeCustomRenderer(cubeRenderer.id);
+        viewer.off("mousemove", handleMouseOver);
+        viewer.off("click", handleClick);
       }
     };
   }, [chatroomList, pointer, raycaster, router, scene, viewer]);
@@ -218,6 +227,12 @@ export default function Home() {
       window.removeEventListener("pointermove", onPointerMove);
     };
   }, [onPointerMove]);
+
+  useEffect(() => {
+    if (viewer) {
+      void viewer.moveTo(IMAGE_ID).catch((error) => console.error(error));
+    }
+  }, [viewer]);
 
   return (
     <main className="w-full h-full">

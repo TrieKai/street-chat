@@ -19,12 +19,15 @@ import {
 import { geoToPosition } from "@/helpers/geo";
 
 import { GeoPosition } from "@/type/geo";
+import { TextSprite } from "./textSprite";
 
 export type Cube = {
   geoPosition: GeoPosition;
   mesh: Mesh;
   rotationSpeed: number;
   chatroomId: string;
+  name: string;
+  textSprite?: TextSprite;
 };
 
 export class ThreeCubeRenderer implements ICustomRenderer {
@@ -67,8 +70,19 @@ export class ThreeCubeRenderer implements ICustomRenderer {
 
     this.cubes.forEach((cube) => {
       const position = geoToPosition(cube.geoPosition, reference);
+      console.log("position", position);
+
+      // Create text sprite
+      const textSprite = new TextSprite(cube.name);
+      cube.textSprite = textSprite;
+
+      // Position the cube and text
       cube.mesh.position.fromArray(position);
+      textSprite.setPosition(position[0], position[1], position[2]);
+
+      // Add both to scene
       this.scene.add(cube.mesh);
+      this.scene.add(textSprite.getSprite());
     });
 
     const canvas = viewer.getCanvas();
@@ -86,17 +100,29 @@ export class ThreeCubeRenderer implements ICustomRenderer {
     cubes.forEach((cube) => {
       const position = geoToPosition(cube.geoPosition, reference);
       cube.mesh.position.fromArray(position);
+      if (cube.textSprite) {
+        cube.textSprite.setPosition(position[0], position[1], position[2]);
+      }
     });
   }
   onRemove(_viewer: IViewer, _context: WebGL2RenderingContext) {
-    const { cubes, renderer } = this;
+    const { cubes, renderer, scene } = this;
 
     cubes.forEach((cube) => {
+      // Remove from scene
+      scene.remove(cube.mesh);
+      if (cube.textSprite) {
+        scene.remove(cube.textSprite.getSprite());
+      }
+
+      // Dispose resources
       cube.mesh.geometry.dispose();
       if (Array.isArray(cube.mesh.material)) {
         cube.mesh.material.forEach((m) => m.dispose());
       }
+      cube.textSprite?.dispose();
     });
+
     renderer?.dispose();
   }
   render(

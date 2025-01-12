@@ -38,8 +38,8 @@ export const useGetChatRoomList = (
     //   where('position', '>=', SW)
     // )
     const q = query(
-      collection(db, DB_COLLECTION_PATH)
-      // where("create_at", ">=", new Date().getTime() - ONE_DAY)
+      collection(db, DB_COLLECTION_PATH),
+      where("create_at", ">=", new Date().getTime() - ONE_DAY)
     );
     const querySnapshot = await getDocs(q);
     setChatroomList(querySnapshot.docs);
