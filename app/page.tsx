@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Viewer, ViewerMouseEvent, ViewerOptions } from "mapillary-js";
+import {
+  Viewer,
+  ViewerImageEvent,
+  ViewerMouseEvent,
+  ViewerOptions,
+} from "mapillary-js";
 import { Event, Object3D, Raycaster, Scene, Vector2 } from "three";
 import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
 
@@ -14,8 +19,9 @@ import { useRouter } from "next/navigation";
 import { Chatroom } from "@/type/chatroom";
 import CreateChatroomModal from "@/app/components/CreateChatroomModal";
 import { getDistanceFromLatLonInMeters } from "@/helpers/distance";
+import { getMapillaryImageLocation } from "@/helpers/mapillary";
+import { ACCESS_TOKEN } from "@/constants/common";
 
-const ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN;
 const IMAGE_ID = "474314650500833"; // Ximending
 
 export default function Home() {
@@ -29,7 +35,15 @@ export default function Home() {
   const [viewer, setViewer] = useState<Viewer | null>(null);
   const cubes = useRef<Cube[]>([]);
 
-  const { chatroomList } = useGetChatRoomList(db);
+  const [currentLocation, setCurrentLocation] = useState<
+    [number, number] | null
+  >(null);
+  const { chatroomList } = useGetChatRoomList(
+    db,
+    currentLocation?.[0],
+    currentLocation?.[1],
+    10
+  );
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingLocation, setPendingLocation] = useState<{
@@ -118,7 +132,6 @@ export default function Home() {
 
     cubes.current = chatroomList.map((chatroom) => {
       const chatroomData = chatroom.data() as Chatroom;
-      console.log("chatroomData", chatroomData);
       return {
         geoPosition: {
           alt: 1,
@@ -140,6 +153,14 @@ export default function Home() {
     );
 
     viewer.addCustomRenderer(cubeRenderer);
+
+    const handleImage = (event: ViewerImageEvent): void => {
+      if (event.image.id) {
+        void getMapillaryImageLocation(event.image.id).then((position) => {
+          setCurrentLocation(position);
+        });
+      }
+    };
 
     const handleMouseOver = (_event: ViewerMouseEvent): void => {
       const intersects = raycaster.intersectObjects(scene.children);
@@ -208,12 +229,14 @@ export default function Home() {
       }
     };
 
+    viewer.on("image", handleImage);
     viewer.on("mousemove", handleMouseOver);
     viewer.on("click", handleClick);
 
     return () => {
       if (viewer) {
         viewer.removeCustomRenderer(cubeRenderer.id);
+        viewer.off("image", handleImage);
         viewer.off("mousemove", handleMouseOver);
         viewer.off("click", handleClick);
       }
@@ -230,7 +253,13 @@ export default function Home() {
 
   useEffect(() => {
     if (viewer) {
-      void viewer.moveTo(IMAGE_ID).catch((error) => console.error(error));
+      void viewer
+        .moveTo(IMAGE_ID)
+        .then(async () => {
+          const [lat, lng] = await getMapillaryImageLocation(IMAGE_ID);
+          setCurrentLocation([lat, lng]);
+        })
+        .catch((error) => console.error(error));
     }
   }, [viewer]);
 

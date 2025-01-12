@@ -70,7 +70,6 @@ export class ThreeCubeRenderer implements ICustomRenderer {
 
     this.cubes.forEach((cube) => {
       const position = geoToPosition(cube.geoPosition, reference);
-      console.log("position", position);
 
       // Create text sprite
       const textSprite = new TextSprite(cube.name);
