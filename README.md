@@ -1,4 +1,31 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Street Chat <img src="public/street-chat.png" alt="Street Chat Icon" width="32" height="32" />
+
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18-blue)](https://reactjs.org/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-06B6D4)](https://tailwindcss.com/)
+
+A real-time 3D street communication platform that allows users to chat and interact in a virtual street environment.
+
+## Features
+
+- Real-time 3D street visualization
+- Interactive chat system
+- User authentication
+- Chatroom creation and management
+- PWA support for mobile devices
+- Responsive design for all screen sizes
+- Google Maps integration
+- Three.js powered 3D rendering
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React, TypeScript
+- **Styling**: Tailwind CSS
+- **3D Rendering**: Three.js
+- **Maps**: Mapillary
+- **Database**: Firestore
+- **Authentication**: Firebase
+- **Deployment**: Vercel
 
 ## Getting Started
 
@@ -16,26 +43,34 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Copy the `.env.example` file to `.env.local` and update the variables:
 
-## Learn More
+```env
+NEXT_PUBLIC_MAPILLARY_ACCESS_TOKEN=
+NEXT_PUBLIC_FIREBASE_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
+NEXT_PUBLIC_BASE_URL=
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Contributing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contact
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
-
-## Environment Setup
-
-1. Copy `.env.example` to `.env.local`
-2. Fill in your Firebase configuration values in `.env.local`
+For any questions or feedback, please open an issue in the GitHub repository.
