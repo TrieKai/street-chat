@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Viewer,
   ViewerImageEvent,
@@ -9,6 +16,13 @@ import {
 } from "mapillary-js";
 import { Event, Object3D, Raycaster, Scene, Sprite, Vector2 } from "three";
 import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  Transition,
+  TransitionChild,
+} from "@headlessui/react";
 
 import { Cube, ThreeCubeRenderer } from "@/model/threeRenderer";
 import { createCubeMesh } from "@/helpers/three";
@@ -45,6 +59,7 @@ export default function Home() {
   );
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDistanceAlertOpen, setIsDistanceAlertOpen] = useState(false);
   const [pendingLocation, setPendingLocation] = useState<{
     lat: number;
     lng: number;
@@ -71,7 +86,46 @@ export default function Home() {
           onAuthStateChanged(auth, (user) => resolve(user));
         });
 
-        if (!user) return;
+        if (!user) {
+          await signInWithPopup(auth, provider);
+          // retry to create the chatroom after signing in
+          const newUser = await new Promise<User | null>((resolve) => {
+            onAuthStateChanged(auth, (user) => resolve(user));
+          });
+          if (!newUser) return;
+
+          const chatroomId = await createChatroom(
+            name,
+            pendingLocation.lat,
+            pendingLocation.lng,
+            newUser
+          );
+
+          cubes.current.push({
+            geoPosition: {
+              alt: 1,
+              lat: pendingLocation.lat,
+              lng: pendingLocation.lng,
+            },
+            mesh: createCubeMesh(chatroomId),
+            rotationSpeed: 1,
+            chatroomId,
+            name,
+          });
+
+          const newCubeRenderer = new ThreeCubeRenderer(
+            scene,
+            cubes.current,
+            raycaster,
+            pointer
+          );
+          viewer.addCustomRenderer(newCubeRenderer);
+
+          setIsModalOpen(false);
+          setPendingLocation(null);
+          router.push(`/${chatroomId}`);
+          return;
+        }
 
         const chatroomId = await createChatroom(
           name,
@@ -160,7 +214,7 @@ export default function Home() {
     const handleMouseOver = (_event: ViewerMouseEvent): void => {
       const intersects = raycaster.intersectObjects(scene.children);
       if (intersects.length > 0) {
-        // Only handle non-Sprite objects
+        // only handle non-Sprite objects
         const meshIntersect = intersects.find(
           (intersect) => !(intersect.object instanceof Sprite)
         );
@@ -207,28 +261,15 @@ export default function Home() {
         );
 
         if (distance > 10) {
-          alert("只能在當前位置方圓 10 公尺內建立聊天室");
+          setIsDistanceAlertOpen(true);
           return;
         }
 
-        try {
-          const user = await new Promise<User | null>((resolve) => {
-            onAuthStateChanged(auth, (user) => resolve(user));
-          });
-
-          if (!user) {
-            await signInWithPopup(auth, provider);
-            return;
-          }
-
-          setPendingLocation({
-            lat: event.lngLat.lat,
-            lng: event.lngLat.lng,
-          });
-          setIsModalOpen(true);
-        } catch (error) {
-          console.error("Error:", error);
-        }
+        setPendingLocation({
+          lat: event.lngLat.lat,
+          lng: event.lngLat.lng,
+        });
+        setIsModalOpen(true);
       }
     };
 
@@ -268,6 +309,64 @@ export default function Home() {
         onClose={handleCloseModal}
         onSubmit={handleCreateChatroom}
       />
+      <Transition appear show={isDistanceAlertOpen} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-10"
+          onClose={() => setIsDistanceAlertOpen(false)}
+        >
+          <TransitionChild
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </TransitionChild>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <TransitionChild
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <DialogTitle
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900"
+                  >
+                    超出可建立範圍
+                  </DialogTitle>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      為了確保聊天室的地理相關性，只能在當前位置方圓 10
+                      公尺內建立聊天室。
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      onClick={() => setIsDistanceAlertOpen(false)}
+                    >
+                      我知道了
+                    </button>
+                  </div>
+                </DialogPanel>
+              </TransitionChild>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </main>
   );
 }
