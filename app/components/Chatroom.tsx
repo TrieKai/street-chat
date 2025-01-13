@@ -18,15 +18,17 @@ import {
   Transition,
   TransitionChild,
 } from "@headlessui/react";
+import { useRouter } from "next/navigation";
 import MessageBubble from "./Message";
 
-import { SendIcon } from "@/app/icons";
+import { ArrowIcon, SendIcon } from "@/app/icons";
 
 type Props = {
   chatroomId: string;
 };
 
 export default function ChatroomClient({ chatroomId }: Props) {
+  const router = useRouter();
   const [chatroomName, setChatroomName] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -34,6 +36,10 @@ export default function ChatroomClient({ chatroomId }: Props) {
   const [userId, setUserId] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  const handleBack = useCallback((): void => {
+    router.push("/");
+  }, [router]);
 
   const handleLogin = useCallback((): void => {
     signInWithPopup(auth, provider)
@@ -105,7 +111,14 @@ export default function ChatroomClient({ chatroomId }: Props) {
 
   return (
     <main className="w-full h-screen flex flex-col">
-      <header className="p-4 h-16 border-b border-gray-200 bg-white">
+      <header className="p-4 h-16 border-b border-gray-200 bg-white flex items-center gap-3">
+        <button
+          className="w-8 h-8 flex items-center justify-center hover:opacity-70 transition-opacity scale-x-[-1]"
+          onClick={handleBack}
+          aria-label="返回"
+        >
+          <ArrowIcon />
+        </button>
         <h1 className="text-xl font-semibold">{chatroomName}</h1>
       </header>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
