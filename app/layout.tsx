@@ -14,7 +14,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || "https://street-chat.vercel.app/"
+    process.env.NEXT_PUBLIC_BASE_URL || "https://street-chat.vercel.app"
   ),
   title: "Street Chat - Real-time 3D Street Communication",
   description:
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     "virtual street",
     "social platform",
   ],
-  authors: [{ name: "Street Chat Team" }],
+  authors: [{ name: "Trie Chen" }],
   openGraph: {
     title: "Street Chat - Real-time 3D Street Communication",
     description:
@@ -65,13 +65,15 @@ export default function RootLayout({
           href="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.css"
           rel="stylesheet"
         />
+        <link rel="icon" href="/street-chat.png" />
+        <link rel="apple-touch-icon" href="/street-chat.png" />
+        <link rel="manifest" href="/manifest.json" />
         <meta name="application-name" content="Street Chat" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Street Chat" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         {children}

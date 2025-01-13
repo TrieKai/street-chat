@@ -2,6 +2,9 @@
   "name": "street-chat",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
+  "author": "Trie Chen <ackerman.trie@gmail.com>",
+  "description": "A real-time 3D street chat application",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
