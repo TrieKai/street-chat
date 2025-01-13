@@ -45,7 +45,7 @@ export const useGetChatRoomList = (
     if (latitude && longitude) {
       // use a larger search radius to ensure we don't miss edge cases
       const searchRadius = radiusInMeters * 1.5;
-      const latDegrees = searchRadius / 111320; // 約略轉換
+      const latDegrees = searchRadius / 111320; // approximate conversion
       const lngDegrees = latDegrees / Math.cos((latitude * Math.PI) / 180);
 
       const NE = new GeoPoint(latitude + latDegrees, longitude + lngDegrees);

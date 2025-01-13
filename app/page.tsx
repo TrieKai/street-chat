@@ -7,7 +7,7 @@ import {
   ViewerMouseEvent,
   ViewerOptions,
 } from "mapillary-js";
-import { Event, Object3D, Raycaster, Scene, Vector2 } from "three";
+import { Event, Object3D, Raycaster, Scene, Sprite, Vector2 } from "three";
 import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
 
 import { Cube, ThreeCubeRenderer } from "@/model/threeRenderer";
@@ -19,7 +19,6 @@ import { useRouter } from "next/navigation";
 import { Chatroom } from "@/type/chatroom";
 import CreateChatroomModal from "@/app/components/CreateChatroomModal";
 import { getDistanceFromLatLonInMeters } from "@/helpers/distance";
-import { getMapillaryImageLocation } from "@/helpers/mapillary";
 import { ACCESS_TOKEN } from "@/constants/common";
 
 const IMAGE_ID = "474314650500833"; // Ximending
@@ -155,21 +154,25 @@ export default function Home() {
     viewer.addCustomRenderer(cubeRenderer);
 
     const handleImage = (event: ViewerImageEvent): void => {
-      if (event.image.id) {
-        void getMapillaryImageLocation(event.image.id).then((position) => {
-          setCurrentLocation(position);
-        });
-      }
+      setCurrentLocation([event.image.lngLat.lat, event.image.lngLat.lng]);
     };
 
     const handleMouseOver = (_event: ViewerMouseEvent): void => {
       const intersects = raycaster.intersectObjects(scene.children);
       if (intersects.length > 0) {
-        if (currentIntersect.current !== intersects[0].object) {
+        // Only handle non-Sprite objects
+        const meshIntersect = intersects.find(
+          (intersect) => !(intersect.object instanceof Sprite)
+        );
+
+        if (
+          meshIntersect &&
+          currentIntersect.current !== meshIntersect.object
+        ) {
           if (currentIntersect.current) {
             currentIntersect.current.scale.set(1, 1, 1);
           }
-          currentIntersect.current = intersects[0].object;
+          currentIntersect.current = meshIntersect.object;
           currentIntersect.current.scale.set(1.2, 1.2, 1.2);
         }
       } else {
@@ -253,13 +256,7 @@ export default function Home() {
 
   useEffect(() => {
     if (viewer) {
-      void viewer
-        .moveTo(IMAGE_ID)
-        .then(async () => {
-          const [lat, lng] = await getMapillaryImageLocation(IMAGE_ID);
-          setCurrentLocation([lat, lng]);
-        })
-        .catch((error) => console.error(error));
+      void viewer.moveTo(IMAGE_ID).catch((error) => console.error(error));
     }
   }, [viewer]);
 

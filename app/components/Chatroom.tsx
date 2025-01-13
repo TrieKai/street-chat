@@ -65,7 +65,6 @@ export default function ChatroomClient({ chatroomId }: Props) {
       (doc) => {
         if (doc.exists()) {
           const data = doc.data();
-          console.log(data);
           setMessages(data.messages || []);
           setUsers(data.users || []);
           setChatroomName(data.name || "Chat Room");
