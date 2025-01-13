@@ -27,6 +27,9 @@ import {
 import MessageBubble from "./Message";
 
 import { ArrowIcon, SendIcon } from "@/app/icons";
+import HeadShot from "./HeadShot";
+
+const HEAD_SHOT_SIZE = 32;
 
 type Props = {
   chatroomId: string;
@@ -148,12 +151,11 @@ export default function ChatroomClient({ chatroomId }: Props) {
             <MenuButton className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
               <span className="sr-only">打開用戶選單</span>
               <div className="w-full h-full flex items-center justify-center text-sm font-medium text-gray-700">
-                <Image
-                  src={user.photo_url}
-                  alt={user.user_name}
-                  width={32}
-                  height={32}
-                  className="rounded-full"
+                <HeadShot
+                  headShotURL={user.photo_url}
+                  width={HEAD_SHOT_SIZE}
+                  height={HEAD_SHOT_SIZE}
+                  title={user.user_name}
                 />
               </div>
             </MenuButton>
