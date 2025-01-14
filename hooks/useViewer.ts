@@ -48,7 +48,9 @@ export const useViewer = ({
 
   const createChatroomCube = useCallback(
     (chatroomId: string, name: string): void => {
-      if (!pendingLocation || !viewer) return;
+      if (!pendingLocation || !viewer) {
+        return;
+      }
 
       cubes.current.push({
         geoPosition: {
@@ -85,7 +87,9 @@ export const useViewer = ({
   });
 
   useEffect(() => {
-    if (!viewerContainer) return;
+    if (!viewerContainer) {
+      return;
+    }
 
     const options: ViewerOptions = {
       accessToken: ACCESS_TOKEN,
@@ -96,7 +100,9 @@ export const useViewer = ({
   }, [viewerContainer]);
 
   useEffect(() => {
-    if (!viewerContainer) return;
+    if (!viewerContainer) {
+      return;
+    }
 
     const handlePointerMoveEvent = (event: PointerEvent): void => {
       handlePointerMove(event, viewerContainer);
@@ -109,7 +115,9 @@ export const useViewer = ({
   }, [handlePointerMove, viewerContainer]);
 
   useEffect(() => {
-    if (!viewer) return;
+    if (!viewer) {
+      return;
+    }
 
     cubes.current = createCubesFromChatroomList(chatroomList);
     const cubeRenderer = new ThreeCubeRenderer(

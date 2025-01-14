@@ -57,7 +57,9 @@ export const useCubeInteraction = ({
         onChatroomSelect(intersects[0].object.userData.chatroomId);
       } else if (event.lngLat && viewer) {
         const viewerPosition = await viewer.getPosition();
-        if (!viewerPosition) return;
+        if (!viewerPosition) {
+          return;
+        }
 
         const distance = getDistanceFromLatLonInMeters(
           viewerPosition.lat,

@@ -28,33 +28,25 @@ export default function Home() {
 
   const handleCreateChatroom = useCallback(
     async (name: string): Promise<void> => {
-      if (!pendingLocation || !viewer) return;
+      if (!pendingLocation || !viewer) {
+        return;
+      }
 
       try {
-        const user = await new Promise<User | null>((resolve) => {
+        let user = await new Promise<User | null>((resolve) => {
           onAuthStateChanged(auth, (user) => resolve(user));
         });
 
         if (!user) {
           await signInWithPopup(auth, provider);
           // retry to create the chatroom after signing in
-          const newUser = await new Promise<User | null>((resolve) => {
+          user = await new Promise<User | null>((resolve) => {
             onAuthStateChanged(auth, (user) => resolve(user));
           });
-          if (!newUser) return;
 
-          const chatroomId = await createChatroom(
-            name,
-            pendingLocation.lat,
-            pendingLocation.lng,
-            newUser
-          );
-
-          createChatroomCube(chatroomId, name);
-
-          setIsModalOpen(false);
-          router.push(`/${chatroomId}`);
-          return;
+          if (!user) {
+            return;
+          }
         }
 
         const chatroomId = await createChatroom(
@@ -65,7 +57,6 @@ export default function Home() {
         );
 
         createChatroomCube(chatroomId, name);
-
         setIsModalOpen(false);
         router.push(`/${chatroomId}`);
       } catch (error) {
