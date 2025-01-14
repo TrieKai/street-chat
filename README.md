@@ -14,7 +14,7 @@ A real-time 3D street communication platform that allows users to chat and inter
 - Chatroom creation and management
 - PWA support for mobile devices
 - Responsive design for all screen sizes
-- Google Maps integration
+- Mapillary integration
 - Three.js powered 3D rendering
 
 ## Tech Stack

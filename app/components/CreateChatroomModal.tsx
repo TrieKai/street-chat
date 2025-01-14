@@ -8,7 +8,7 @@ import {
 } from "@headlessui/react";
 import { auth } from "@/lib/firebase/firebase";
 
-type Props = {
+type CreateChatroomModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (name: string) => void;
@@ -18,7 +18,7 @@ export default function CreateChatroomModal({
   isOpen,
   onClose,
   onSubmit,
-}: Props) {
+}: CreateChatroomModalProps) {
   const [name, setName] = useState("");
 
   const handleSubmit = (e: FormEvent): void => {

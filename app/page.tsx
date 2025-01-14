@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Viewer,
   ViewerImageEvent,
@@ -16,13 +9,6 @@ import {
 } from "mapillary-js";
 import { Event, Object3D, Raycaster, Scene, Sprite, Vector2 } from "three";
 import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
-import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  Transition,
-  TransitionChild,
-} from "@headlessui/react";
 
 import { Cube, ThreeCubeRenderer } from "@/model/threeRenderer";
 import { createCubeMesh } from "@/helpers/three";
@@ -32,6 +18,7 @@ import { createChatroom } from "@/helpers/chatroom";
 import { useRouter } from "next/navigation";
 import { Chatroom } from "@/type/chatroom";
 import CreateChatroomModal from "@/app/components/CreateChatroomModal";
+import WarningModal from "@/app/components/WarningModal";
 import { getDistanceFromLatLonInMeters } from "@/helpers/distance";
 import { ACCESS_TOKEN } from "@/constants/common";
 
@@ -309,64 +296,10 @@ export default function Home() {
         onClose={handleCloseModal}
         onSubmit={handleCreateChatroom}
       />
-      <Transition appear show={isDistanceAlertOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-10"
-          onClose={() => setIsDistanceAlertOpen(false)}
-        >
-          <TransitionChild
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black bg-opacity-25" />
-          </TransitionChild>
-
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <TransitionChild
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <DialogTitle
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
-                  >
-                    超出可建立範圍
-                  </DialogTitle>
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">
-                      為了確保聊天室的地理相關性，只能在當前位置方圓 10
-                      公尺內建立聊天室。
-                    </p>
-                  </div>
-
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                      onClick={() => setIsDistanceAlertOpen(false)}
-                    >
-                      我知道了
-                    </button>
-                  </div>
-                </DialogPanel>
-              </TransitionChild>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
+      <WarningModal
+        isOpen={isDistanceAlertOpen}
+        onClose={() => setIsDistanceAlertOpen(false)}
+      />
     </main>
   );
 }
