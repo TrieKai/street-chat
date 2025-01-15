@@ -72,7 +72,7 @@ export class ThreeCubeRenderer implements ICustomRenderer {
       const position = geoToPosition(cube.geoPosition, reference);
 
       // Create text sprite
-      const textSprite = new TextSprite(cube.name);
+      const textSprite = new TextSprite(cube.name, cube.chatroomId);
       cube.textSprite = textSprite;
 
       // Position the cube and text

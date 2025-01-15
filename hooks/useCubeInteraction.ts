@@ -39,12 +39,20 @@ export const useCubeInteraction = ({
           }
           hoveredCube.current = meshIntersect.object;
           hoveredCube.current.scale.set(1.2, 1.2, 1.2);
+          const sceneElement = document.querySelector(
+            ".mapillary-interactive"
+          ) as HTMLElement;
+          sceneElement.style.cursor = "pointer";
         }
       } else {
         if (hoveredCube.current) {
           hoveredCube.current.scale.set(1, 1, 1);
         }
         hoveredCube.current = null;
+        const sceneElement = document.querySelector(
+          ".mapillary-interactive"
+        ) as HTMLElement;
+        sceneElement.style.cursor = "";
       }
     },
     [raycaster, scene.children]

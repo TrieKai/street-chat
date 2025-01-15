@@ -5,7 +5,7 @@ export class TextSprite {
   private static readonly FONT_SIZE = 32;
   private static readonly PADDING = 20; // Padding around the text
 
-  constructor(text: string) {
+  constructor(text: string, chatroomId: string) {
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d")!;
 
@@ -43,6 +43,8 @@ export class TextSprite {
     // while keeping it centered
     const scale = 0.5; // Base scale factor
     this.sprite.scale.set((canvas.width / canvas.height) * scale, scale, 1);
+
+    this.sprite.userData.chatroomId = chatroomId;
   }
 
   public getSprite(): Sprite {
