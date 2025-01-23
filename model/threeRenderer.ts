@@ -18,7 +18,7 @@ import {
 
 import { geoToPosition } from "@/helpers/geo";
 
-import { GeoPosition } from "@/type/geo";
+import { GeoPosition } from "@/types/geo";
 import { TextSprite } from "./textSprite";
 
 export type Cube = {

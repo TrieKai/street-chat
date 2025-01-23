@@ -6,29 +6,20 @@ import {
   Transition,
   TransitionChild,
 } from "@headlessui/react";
-import { useLLMStore } from "../store/llmStore";
+import { useConfigStore, MODEL_FAMILIES, CacheType } from "../store/config";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const AVAILABLE_MODELS = [
-  "Qwen2.5-Coder-0.5B-Instruct-q4f16_1-MLC",
-  "Llama-2-7b-chat-hf-q4f32_1",
+const CACHE_OPTIONS = [
+  { value: CacheType.Cache, label: "Cache" },
+  { value: CacheType.IndexedDB, label: "IndexedDB" },
 ];
 
 export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
-  const {
-    model,
-    setModel,
-    temperature,
-    setTemperature,
-    topP,
-    setTopP,
-    maxTokens,
-    setMaxTokens,
-  } = useLLMStore();
+  const { llmConfig, updateLLMConfig } = useConfigStore();
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -70,13 +61,41 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                       Model
                     </label>
                     <select
-                      value={model}
-                      onChange={(e) => setModel(e.target.value)}
+                      value={llmConfig.model}
+                      onChange={(e) =>
+                        updateLLMConfig({ model: e.target.value })
+                      }
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     >
-                      {AVAILABLE_MODELS.map((model) => (
-                        <option key={model} value={model}>
-                          {model}
+                      {MODEL_FAMILIES.map((family) => (
+                        <optgroup
+                          key={family.family}
+                          label={family.family.toUpperCase()}
+                        >
+                          {family.models.map((model) => (
+                            <option key={model.name} value={model.name}>
+                              {model.name} ({model.provider})
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Cache Type
+                    </label>
+                    <select
+                      value={llmConfig.cache}
+                      onChange={(e) =>
+                        updateLLMConfig({ cache: e.target.value as CacheType })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                      {CACHE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
                         </option>
                       ))}
                     </select>
@@ -84,16 +103,18 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Temperature ({temperature})
+                      Temperature ({llmConfig.temperature})
                     </label>
                     <input
                       type="range"
                       min="0"
                       max="1"
                       step="0.1"
-                      value={temperature}
+                      value={llmConfig.temperature}
                       onChange={(e) =>
-                        setTemperature(parseFloat(e.target.value))
+                        updateLLMConfig({
+                          temperature: parseFloat(e.target.value),
+                        })
                       }
                       className="mt-1 block w-full"
                     />
@@ -101,15 +122,19 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Top P ({topP})
+                      Top P ({llmConfig.topP})
                     </label>
                     <input
                       type="range"
                       min="0"
                       max="1"
                       step="0.1"
-                      value={topP}
-                      onChange={(e) => setTopP(parseFloat(e.target.value))}
+                      value={llmConfig.topP}
+                      onChange={(e) =>
+                        updateLLMConfig({
+                          topP: parseFloat(e.target.value),
+                        })
+                      }
                       className="mt-1 block w-full"
                     />
                   </div>
@@ -120,8 +145,12 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                     </label>
                     <input
                       type="number"
-                      value={maxTokens}
-                      onChange={(e) => setMaxTokens(parseInt(e.target.value))}
+                      value={llmConfig.maxLength}
+                      onChange={(e) =>
+                        updateLLMConfig({
+                          maxLength: parseInt(e.target.value),
+                        })
+                      }
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                   </div>

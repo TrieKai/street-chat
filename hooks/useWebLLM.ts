@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { ServiceWorkerMLCEngine } from "@mlc-ai/web-llm";
 import { WebLLMApi } from "@/app/client/webllm";
 import { useLLMStore } from "@/app/store/llmStore";
+import type { RequestMessage } from "@/app/client/api";
 
 export const useWebLLM = () => {
   const [webLLM, setWebLLM] = useState<WebLLMApi>();
@@ -81,12 +82,17 @@ export const useWebLLM = () => {
   const { model, temperature, topP, cache } = useLLMStore();
 
   const chat = useCallback(
-    async (
-      messages: any[],
-      onUpdate?: (message: string) => void,
-      onFinish?: (message: string) => void,
-      onError?: (error: any) => void
-    ): Promise<void> => {
+    async ({
+      messages,
+      onUpdate,
+      onFinish,
+      onError,
+    }: {
+      messages: RequestMessage[];
+      onUpdate?: (message: string) => void;
+      onFinish?: (message: string) => void;
+      onError?: (error: any) => void;
+    }): Promise<void> => {
       if (!webLLM) {
         onError?.("WebLLM not initialized");
         return;

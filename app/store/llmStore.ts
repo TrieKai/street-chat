@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { CacheType, DEFAULT_MODEL, Model } from "./config";
+import { CacheType, DEFAULT_MODEL } from "./config";
+import type { Model } from "@/types/llm";
 
 interface LLMStore {
   model: Model;

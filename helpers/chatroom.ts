@@ -3,7 +3,7 @@ import { addDoc, collection, GeoPoint } from "firebase/firestore";
 import { User } from "firebase/auth";
 import { createAssistantId } from "@/helpers/common";
 import { DB_COLLECTION_PATH } from "@/constants/common";
-import type { Chatroom } from "@/type/chatroom";
+import type { Chatroom } from "@/types/chatroom";
 
 export const createChatroom = async (
   name: string,

@@ -13,6 +13,7 @@ import {
 import { ChatOptions, LLMApi, LLMConfig, RequestMessage } from "./api";
 import { fixMessage } from "@/helpers/llm";
 import { DEFAULT_MODELS } from "@/constants/llm";
+import { CacheType } from "../store";
 
 const KEEP_ALIVE_INTERVAL = 5_000;
 
@@ -40,7 +41,7 @@ export class WebLLMApi implements LLMApi {
     const engineConfig = {
       appConfig: {
         ...prebuiltAppConfig,
-        useIndexedDBCache: this.llmConfig?.cache === "index_db",
+        useIndexedDBCache: this.llmConfig?.cache === CacheType.IndexedDB,
       },
       logLevel,
     };

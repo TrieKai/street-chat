@@ -3,7 +3,7 @@ import { Raycaster, Scene, Vector2 } from "three";
 import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
 import { Cube } from "@/model/threeRenderer";
 import { createCubeMesh } from "@/helpers/three";
-import { Chatroom } from "@/type/chatroom";
+import { Chatroom } from "@/types/chatroom";
 
 export const useThreeScene = () => {
   const scene = useMemo(() => new Scene(), []);

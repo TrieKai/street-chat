@@ -1,6 +1,6 @@
 import { LngLatAlt, geodeticToEnu } from "mapillary-js";
 
-import { GeoPosition } from "@/type/geo";
+import { GeoPosition } from "@/types/geo";
 
 export const geoToPosition = (
   geoPosition: GeoPosition,

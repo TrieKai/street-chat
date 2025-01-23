@@ -1,6 +1,8 @@
 import { ChatCompletionFinishReason, CompletionUsage } from "@mlc-ai/web-llm";
-import { CacheType, Model } from "../store";
+import { CacheType } from "../store";
 import { ModelFamily } from "@/constants/llm";
+import type { Model } from "@/types/llm";
+
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
 

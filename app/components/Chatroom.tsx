@@ -21,9 +21,10 @@ import MessageBubble from "./Message";
 import { useWebLLM } from "@/hooks/useWebLLM";
 import LLMSettingsDialog from "./LLMSettingsDialog";
 import { useLLMStore } from "@/app/store/llmStore";
-import { createAssistantId, isAssistantId } from "@/helpers/common";
+import { isAssistantId } from "@/helpers/common";
 
-import type { Message as ChatMessage, User } from "@/type/chatroom";
+import type { Message, User } from "@/types/chatroom";
+import type { RequestMessage } from "../client/api";
 import HeadShot from "./HeadShot";
 
 const HEAD_SHOT_SIZE = 32;
@@ -35,7 +36,7 @@ type Props = {
 export default function ChatroomClient({ chatroomId }: Props) {
   const router = useRouter();
   const [chatroomName, setChatroomName] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -90,10 +91,10 @@ export default function ChatroomClient({ chatroomId }: Props) {
         return;
       }
 
-      const timestamp = new Date().getTime();
-      const messageData: ChatMessage = {
+      const timestamp = Date.now();
+      const userMessage: Message = {
         id: `${timestamp}-${user.user_id}`,
-        text: newMessage,
+        text: newMessage.trim(),
         timestamp,
         user_id: user.user_id,
         user_name: user.user_name,
@@ -102,51 +103,59 @@ export default function ChatroomClient({ chatroomId }: Props) {
       try {
         // Add user message to Firestore
         await updateDoc(doc(db, "chatrooms", chatroomId), {
-          messages: arrayUnion(messageData),
+          messages: arrayUnion(userMessage),
         });
 
         setNewMessage("");
 
         // Generate LLM response
         setIsLLMGenerating(true);
-        const llmMessages = messages.map((msg) => ({
+        const llmMessages: RequestMessage[] = messages.map((msg) => ({
           role: msg.user_id === user.user_id ? "user" : "assistant",
           content: msg.text,
         }));
-        llmMessages.push({ role: "user", content: newMessage });
 
-        await chat(
-          llmMessages,
-          (message) => {
+        // Add the new message
+        llmMessages.push({
+          role: "user",
+          content: newMessage.trim(),
+        });
+
+        await chat({
+          messages: llmMessages,
+          onUpdate: (message): void => {
             setLLMResponse(message);
           },
-          async (message) => {
-            const llmMessageData: ChatMessage = {
+          onFinish: (message): void => {
+            const llmMessageData: Message = {
               id: `${Date.now()}-llm`,
               text: message,
               timestamp: Date.now(),
-              user_id: createAssistantId(model),
-              user_name: model,
+              user_id: "llm",
+              user_name: "AI Assistant",
             };
 
-            await updateDoc(doc(db, "chatrooms", chatroomId), {
+            void updateDoc(doc(db, "chatrooms", chatroomId), {
               messages: arrayUnion(llmMessageData),
+            }).catch((error) => {
+              console.error("Error saving LLM response:", error);
             });
 
             setIsLLMGenerating(false);
             setLLMResponse("");
           },
-          (error) => {
+          onError: (error): void => {
             console.error("LLM Error:", error);
             setIsLLMGenerating(false);
             setLLMResponse("");
-          }
-        );
+          },
+        });
       } catch (error) {
         console.error("Error sending message:", error);
+        setIsLLMGenerating(false);
       }
     },
-    [user, newMessage, chatroomId, messages, chat, model]
+    [user, newMessage, chatroomId, chat, messages]
   );
 
   useEffect(() => {
