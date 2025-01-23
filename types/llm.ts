@@ -1,4 +1,4 @@
-import { CacheType } from "@/app/store/config";
+import { CacheType } from "@/app/store/llmConfigStore";
 import { DEFAULT_MODELS } from "@/constants/llm";
 
 export type Model = (typeof DEFAULT_MODELS)[number]["name"];

@@ -13,8 +13,10 @@ export const DEFAULT_MODEL = "Llama-3.2-1B-Instruct-q4f32_1-MLC";
 export interface LLMConfig {
   model: Model;
   temperature: number;
+  presencePenalty: number;
+  frequencyPenalty: number;
+  maxTokens: number;
   topP: number;
-  maxLength: number;
   cache: CacheType;
 }
 
@@ -26,8 +28,10 @@ interface ConfigState {
 const DEFAULT_CONFIG: LLMConfig = {
   model: DEFAULT_MODEL,
   temperature: 0.7,
+  presencePenalty: 0,
+  frequencyPenalty: 0,
+  maxTokens: 4000,
   topP: 1,
-  maxLength: 4000,
   cache: CacheType.Cache,
 };
 
@@ -37,7 +41,7 @@ export const MODEL_FAMILIES = Object.values(ModelFamily).map((family) => ({
   models: DEFAULT_MODELS.filter((model) => model.family === family),
 }));
 
-export const useConfigStore = create<ConfigState>()(
+export const useLLMConfigStore = create<ConfigState>()(
   persist(
     (set) => ({
       llmConfig: DEFAULT_CONFIG,

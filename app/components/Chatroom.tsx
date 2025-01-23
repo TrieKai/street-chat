@@ -21,8 +21,8 @@ import {
 import MessageBubble from "./Message";
 import { useWebLLM } from "@/hooks/useWebLLM";
 import LLMSettingsDialog from "./LLMSettingsDialog";
-import { useLLMStore } from "@/app/store/llmStore";
-import { isAssistantId } from "@/helpers/common";
+import { useLLMConfigStore } from "@/app/store/llmConfigStore";
+import { createAssistantId, isAssistantId } from "@/helpers/common";
 
 import type { Message, User } from "@/types/chatroom";
 import type { RequestMessage } from "../client/api";
@@ -47,7 +47,7 @@ export default function ChatroomClient({ chatroomId }: Props) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const { chat } = useWebLLM();
-  const { model } = useLLMStore();
+  const { llmConfig } = useLLMConfigStore();
 
   const handleBack = useCallback((): void => {
     router.push("/");
@@ -94,7 +94,7 @@ export default function ChatroomClient({ chatroomId }: Props) {
 
       const timestamp = Date.now();
       const userMessage: Message = {
-        id: `${timestamp}-${user.user_id}`,
+        id: crypto.randomUUID(),
         text: newMessage.trim(),
         timestamp,
         user_id: user.user_id,
@@ -129,10 +129,10 @@ export default function ChatroomClient({ chatroomId }: Props) {
           },
           onFinish: (message): void => {
             const llmMessageData: Message = {
-              id: `${Date.now()}-llm`,
+              id: crypto.randomUUID(),
               text: message,
               timestamp: Date.now(),
-              user_id: "llm",
+              user_id: createAssistantId(),
               user_name: "AI Assistant",
             };
 
@@ -276,7 +276,7 @@ export default function ChatroomClient({ chatroomId }: Props) {
             isSelf={false}
             type="assistant"
             text={llmResponse}
-            userName={model}
+            userName={llmConfig.model}
             time={Date.now()}
           />
         )}

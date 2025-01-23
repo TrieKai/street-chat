@@ -12,7 +12,11 @@ import {
   Transition,
   TransitionChild,
 } from "@headlessui/react";
-import { useConfigStore, MODEL_FAMILIES, CacheType } from "../store/config";
+import {
+  useLLMConfigStore,
+  MODEL_FAMILIES,
+  CacheType,
+} from "../store/llmConfigStore";
 
 interface Props {
   isOpen: boolean;
@@ -25,7 +29,7 @@ const CACHE_OPTIONS = [
 ];
 
 export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
-  const { llmConfig, updateLLMConfig } = useConfigStore();
+  const { llmConfig, updateLLMConfig } = useLLMConfigStore();
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -169,10 +173,10 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                     </label>
                     <input
                       type="number"
-                      value={llmConfig.maxLength}
+                      value={llmConfig.maxTokens}
                       onChange={(e) =>
                         updateLLMConfig({
-                          maxLength: parseInt(e.target.value),
+                          maxTokens: parseInt(e.target.value),
                         })
                       }
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"

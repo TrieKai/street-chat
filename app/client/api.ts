@@ -27,7 +27,7 @@ export interface RequestMessage {
 }
 
 export interface LLMConfig {
-  model: string;
+  model: Model;
   cache: CacheType;
   temperature?: number;
   context_window_size?: number;

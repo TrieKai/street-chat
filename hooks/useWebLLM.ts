@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ServiceWorkerMLCEngine } from "@mlc-ai/web-llm";
 import { WebLLMApi } from "@/app/client/webllm";
-import { useLLMStore } from "@/app/store/llmStore";
+import { useLLMConfigStore } from "@/app/store/llmConfigStore";
 import type { RequestMessage } from "@/app/client/api";
 
 export const useWebLLM = () => {
@@ -79,7 +79,7 @@ export const useWebLLM = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { model, temperature, topP, cache } = useLLMStore();
+  const { llmConfig } = useLLMConfigStore();
 
   const chat = useCallback(
     async ({
@@ -103,10 +103,7 @@ export const useWebLLM = () => {
           messages,
           config: {
             stream: true,
-            model,
-            temperature,
-            top_p: topP,
-            cache,
+            ...llmConfig,
           },
           onUpdate(message) {
             onUpdate?.(message);
@@ -122,7 +119,7 @@ export const useWebLLM = () => {
         onError?.(error);
       }
     },
-    [cache, model, temperature, topP, webLLM]
+    [llmConfig, webLLM]
   );
 
   if (webLLM?.webLLMHandler.type === "serviceWorker") {
