@@ -3,6 +3,12 @@ import {
   Dialog,
   DialogPanel,
   DialogTitle,
+  Menu,
+  MenuButton,
+  MenuHeading,
+  MenuItem,
+  MenuItems,
+  MenuSection,
   Transition,
   TransitionChild,
 } from "@headlessui/react";
@@ -60,45 +66,63 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                     <label className="block text-sm font-medium text-gray-700">
                       Model
                     </label>
-                    <select
-                      value={llmConfig.model}
-                      onChange={(e) =>
-                        updateLLMConfig({ model: e.target.value })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    >
-                      {MODEL_FAMILIES.map((family) => (
-                        <optgroup
-                          key={family.family}
-                          label={family.family.toUpperCase()}
-                        >
-                          {family.models.map((model) => (
-                            <option key={model.name} value={model.name}>
-                              {model.name} ({model.provider})
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
+                    <Menu>
+                      <MenuButton className="w-full inline-flex items-center gap-2 rounded-md bg-white py-1.5 px-3 text-sm/6 font-semibold text-gray-800 shadow-md shadow-gray-200/50 focus:outline-none data-[hover]:bg-gray-100 data-[open]:bg-gray-100 data-[focus]:outline-1 data-[focus]:outline-gray-800">
+                        {llmConfig.model}
+                      </MenuButton>
+                      <MenuItems
+                        anchor="bottom start"
+                        className="w-72 origin-top-right rounded-xl border border-gray-200 bg-white p-1 text-sm/6 text-gray-800 transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+                      >
+                        {MODEL_FAMILIES.map((family) => (
+                          <MenuSection key={family.family}>
+                            <MenuHeading className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">
+                              {family.family.toUpperCase()}
+                            </MenuHeading>
+                            {family.models.map((model) => (
+                              <MenuItem key={model.name}>
+                                <button
+                                  onClick={() =>
+                                    updateLLMConfig({ model: model.name })
+                                  }
+                                  className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-gray-800 hover:bg-gray-100 data-[focus]:bg-gray-200"
+                                >
+                                  {model.name} ({model.provider})
+                                </button>
+                              </MenuItem>
+                            ))}
+                          </MenuSection>
+                        ))}
+                      </MenuItems>
+                    </Menu>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Cache Type
                     </label>
-                    <select
-                      value={llmConfig.cache}
-                      onChange={(e) =>
-                        updateLLMConfig({ cache: e.target.value as CacheType })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    >
-                      {CACHE_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    <Menu>
+                      <MenuButton className="w-full inline-flex items-center gap-2 rounded-md bg-white py-1.5 px-3 text-sm/6 font-semibold text-gray-800 shadow-md shadow-gray-200/50 focus:outline-none data-[hover]:bg-gray-100 data-[open]:bg-gray-100 data-[focus]:outline-1 data-[focus]:outline-gray-800">
+                        {llmConfig.cache}
+                      </MenuButton>
+                      <MenuItems
+                        anchor="bottom start"
+                        className="w-72 origin-top-right rounded-xl border border-gray-200 bg-white p-1 text-sm/6 text-gray-800 transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+                      >
+                        {CACHE_OPTIONS.map((option) => (
+                          <MenuItem key={option.value}>
+                            <button
+                              onClick={() =>
+                                updateLLMConfig({ cache: option.value })
+                              }
+                              className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-gray-800 hover:bg-gray-100 data-[focus]:bg-gray-200"
+                            >
+                              {option.label}
+                            </button>
+                          </MenuItem>
+                        ))}
+                      </MenuItems>
+                    </Menu>
                   </div>
 
                   <div>
