@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, SendHorizontal, Settings } from "lucide-react";
 import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
+import clsx from "clsx";
 import { auth, db, provider } from "@/lib/firebase/firebase";
 import {
   Dialog,
@@ -237,9 +238,10 @@ export default function ChatroomClient({ chatroomId }: Props) {
                       {({ focus }) => (
                         <button
                           onClick={handleLogout}
-                          className={`${
-                            focus ? "bg-gray-100" : ""
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-900`}
+                          className={clsx(
+                            "group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-900",
+                            focus && "bg-gray-100"
+                          )}
                         >
                           登出
                         </button>

@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import clsx from "clsx";
 import HeadShot from "@/app/components/HeadShot";
 import { formatMessage } from "@/helpers/common";
 
@@ -22,9 +23,11 @@ const Message = forwardRef<HTMLDivElement, IMessage>(
     return (
       <div
         ref={ref}
-        className={`w-full p-2 flex ${
-          isSelf ? "flex-row-reverse" : "flex-row"
-        } gap-2 ${className}`}
+        className={clsx(
+          "w-full p-2 flex gap-2",
+          isSelf ? "flex-row-reverse" : "flex-row",
+          className
+        )}
       >
         {/* Avatar */}
         <div className="flex-shrink-0">
@@ -39,24 +42,27 @@ const Message = forwardRef<HTMLDivElement, IMessage>(
 
         {/* Message content */}
         <div
-          className={`flex flex-col max-w-[70%] ${
+          className={clsx(
+            "flex flex-col max-w-[70%]",
             isSelf ? "items-end" : "items-start"
-          }`}
+          )}
         >
           <span className="text-sm text-gray-600 mb-1">{userName}</span>
 
-          <div className={`relative group`}>
+          <div className="relative group">
             <div
-              className={`p-2.5 rounded-2xl ${
-                isSelf ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
-              } break-words`}
+              className={clsx(
+                "p-2.5 rounded-2xl break-words",
+                isSelf ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-900"
+              )}
               dangerouslySetInnerHTML={{ __html: formatMessage(text) }}
             />
 
             <span
-              className={`text-xs text-gray-500 mt-1 ${
+              className={clsx(
+                "text-xs text-gray-500 mt-1",
                 isSelf ? "text-right" : "text-left"
-              }`}
+              )}
             >
               {new Date(time).toLocaleTimeString()}
             </span>
