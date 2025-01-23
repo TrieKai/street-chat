@@ -34,3 +34,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# SEO
+robots.txt
+sitemap.xml
+
+# service worker generated files
+public/sw.js
+public/workbox-*.js
+public/workbox-*.js.map
+public/worker-*.js

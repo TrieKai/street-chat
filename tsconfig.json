@@ -1,6 +1,12 @@
 {
   "compilerOptions": {
     "target": "es5",
+    "types": [
+      "@serwist/next/typings",
+      "@types/serviceworker",
+      "@types/sanitize-html",
+      "@webgpu/types"
+    ],
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
