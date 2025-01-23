@@ -1,39 +1,50 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import NextImage from "next/image";
-import { DEFAULT_AVATAR_PATH } from "@/constants/common";
+import {
+  DEFAULT_ASSISTANT_AVATAR_PATH,
+  DEFAULT_USER_AVATAR_PATH,
+} from "@/constants/common";
 
 interface IHeadShot {
   headShotURL: string;
+  type?: "user" | "assistant";
   title?: string;
   alt?: string;
   width: number;
   height: number;
 }
 
-const checkImageLoadable = (path: string): Promise<string> =>
-  new Promise((resolve) => {
-    const image = new Image();
-    image.src = path;
-    image.onload = () => resolve(path);
-    image.onerror = () => resolve(DEFAULT_AVATAR_PATH);
-  });
-
 const HeadShot = ({
   headShotURL,
+  type = "user",
   title,
   alt = "avatar",
   width,
   height,
 }: IHeadShot): JSX.Element => {
+  const DEFAULT_AVATAR_PATH =
+    type === "user" ? DEFAULT_USER_AVATAR_PATH : DEFAULT_ASSISTANT_AVATAR_PATH;
   const [imageURL, setImageURL] = useState<string>(DEFAULT_AVATAR_PATH);
+
+  const checkImageLoadable = useCallback(
+    (path: string): Promise<string> =>
+      new Promise((resolve) => {
+        const image = new Image();
+        image.src = path;
+        image.onload = () => resolve(path);
+        image.onerror = () => resolve(DEFAULT_AVATAR_PATH);
+      }),
+    [DEFAULT_AVATAR_PATH]
+  );
 
   useEffect(() => {
     const getImageURL = async () => {
       const imageURL = await checkImageLoadable(headShotURL);
       setImageURL(imageURL);
     };
-    getImageURL();
-  }, [headShotURL]);
+
+    void getImageURL();
+  }, [checkImageLoadable, headShotURL]);
 
   return (
     <NextImage

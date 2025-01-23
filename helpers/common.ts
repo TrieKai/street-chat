@@ -75,3 +75,11 @@ export const formatMessage = (text: string): string => {
   // finally, sanitize the text
   return sanitizeMessage(text);
 };
+
+export const createAssistantId = (id = ""): string => {
+  return `assistant_${id ? id : crypto.randomUUID()}`;
+};
+
+export const isAssistantId = (id: string): boolean => {
+  return id.startsWith("assistant_");
+};

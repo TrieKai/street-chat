@@ -9,6 +9,7 @@ export type Chatroom = {
 };
 
 export interface Message {
+  id: string;
   user_id: string;
   user_name: string;
   text: string;

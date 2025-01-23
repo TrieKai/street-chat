@@ -3,8 +3,9 @@ import HeadShot from "@/app/components/HeadShot";
 import { formatMessage } from "@/helpers/common";
 
 interface IMessage {
+  type: "user" | "assistant";
   isSelf: boolean;
-  userAvatarUrl: string;
+  userAvatarUrl?: string;
   userName: string;
   text: string;
   time: number;
@@ -15,7 +16,7 @@ const HEAD_SHOT_SIZE = 44;
 
 const Message = forwardRef<HTMLDivElement, IMessage>(
   (
-    { isSelf, userAvatarUrl, userName, text, time, className },
+    { type, isSelf, userAvatarUrl, userName, text, time, className },
     ref
   ): JSX.Element => {
     return (
@@ -28,7 +29,8 @@ const Message = forwardRef<HTMLDivElement, IMessage>(
         {/* Avatar */}
         <div className="flex-shrink-0">
           <HeadShot
-            headShotURL={userAvatarUrl}
+            headShotURL={userAvatarUrl || ""}
+            type={type}
             width={HEAD_SHOT_SIZE}
             height={HEAD_SHOT_SIZE}
             title={userName}

@@ -1,8 +1,9 @@
-import { addDoc, collection, GeoPoint } from "firebase/firestore";
 import { db } from "@/lib/firebase/firebase";
-import { DB_COLLECTION_PATH } from "@/constants/common";
-import { Chatroom } from "@/type/chatroom";
+import { addDoc, collection, GeoPoint } from "firebase/firestore";
 import { User } from "firebase/auth";
+import { createAssistantId } from "@/helpers/common";
+import { DB_COLLECTION_PATH } from "@/constants/common";
+import type { Chatroom } from "@/type/chatroom";
 
 export const createChatroom = async (
   name: string,
@@ -13,7 +14,15 @@ export const createChatroom = async (
   const chatroom: Omit<Chatroom, "id"> = {
     position: new GeoPoint(lat, lng),
     create_at: Date.now(),
-    messages: [],
+    messages: [
+      {
+        id: crypto.randomUUID(),
+        user_id: createAssistantId(),
+        user_name: "AI Assistant",
+        text: "How can I help you today?",
+        timestamp: Date.now(),
+      },
+    ],
     name,
     users: [
       {
