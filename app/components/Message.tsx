@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import clsx from "clsx";
+import { LoaderCircle } from "lucide-react";
 import HeadShot from "@/app/components/HeadShot";
 import { formatMessage } from "@/helpers/common";
 
@@ -10,6 +11,7 @@ interface IMessage {
   userName: string;
   text: string;
   time: number;
+  isLoading?: boolean;
   className?: string;
 }
 
@@ -17,7 +19,16 @@ const HEAD_SHOT_SIZE = 44;
 
 const Message = forwardRef<HTMLDivElement, IMessage>(
   (
-    { type, isSelf, userAvatarUrl, userName, text, time, className },
+    {
+      type,
+      isSelf,
+      userAvatarUrl,
+      userName,
+      text,
+      time,
+      isLoading = false,
+      className,
+    },
     ref
   ): JSX.Element => {
     return (
@@ -52,11 +63,18 @@ const Message = forwardRef<HTMLDivElement, IMessage>(
           <div className="relative group">
             <div
               className={clsx(
-                "p-2.5 rounded-2xl break-words",
+                "p-2.5 rounded-2xl break-words min-h-[44px]",
                 isSelf ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-900"
               )}
-              dangerouslySetInnerHTML={{ __html: formatMessage(text) }}
-            />
+            >
+              {isLoading ? (
+                <LoaderCircle className="animate-spin text-gray-600" />
+              ) : (
+                <span
+                  dangerouslySetInnerHTML={{ __html: formatMessage(text) }}
+                />
+              )}
+            </div>
 
             <span
               className={clsx(

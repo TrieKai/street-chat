@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, SendHorizontal, Settings } from "lucide-react";
+import {
+  ChevronLeft,
+  CircleStop,
+  SendHorizontal,
+  Settings,
+} from "lucide-react";
 import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import clsx from "clsx";
@@ -46,7 +51,7 @@ export default function ChatroomClient({ chatroomId }: Props) {
   const [llmResponse, setLLMResponse] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const { chat } = useWebLLM();
+  const { webLLM, chat } = useWebLLM();
   const { llmConfig } = useLLMConfigStore();
 
   const handleBack = useCallback((): void => {
@@ -63,7 +68,7 @@ export default function ChatroomClient({ chatroomId }: Props) {
   }, [router]);
 
   const handleLogin = useCallback((): void => {
-    signInWithPopup(auth, provider)
+    void signInWithPopup(auth, provider)
       .then((result) => {
         setUser({
           user_id: result.user.uid,
@@ -125,6 +130,7 @@ export default function ChatroomClient({ chatroomId }: Props) {
         await chat({
           messages: llmMessages,
           onUpdate: (message): void => {
+            setIsLLMGenerating(true);
             setLLMResponse(message);
           },
           onFinish: (message): void => {
@@ -133,7 +139,7 @@ export default function ChatroomClient({ chatroomId }: Props) {
               text: message,
               timestamp: Date.now(),
               user_id: createAssistantId(),
-              user_name: "AI Assistant",
+              user_name: llmConfig.model,
             };
 
             void updateDoc(doc(db, "chatrooms", chatroomId), {
@@ -156,7 +162,22 @@ export default function ChatroomClient({ chatroomId }: Props) {
         setIsLLMGenerating(false);
       }
     },
-    [user, newMessage, chatroomId, chat, messages]
+    [user, newMessage, chatroomId, messages, chat, llmConfig.model]
+  );
+
+  const handleStopGenerating = useCallback((): void => {
+    setIsLLMGenerating(false);
+    webLLM?.abort();
+  }, [webLLM]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage(e);
+      }
+    },
+    [handleSendMessage]
   );
 
   useEffect(() => {
@@ -271,37 +292,36 @@ export default function ChatroomClient({ chatroomId }: Props) {
             />
           );
         })}
-        {isLLMGenerating && llmResponse && (
+        {isLLMGenerating && (
           <MessageBubble
             isSelf={false}
             type="assistant"
             text={llmResponse}
             userName={llmConfig.model}
             time={Date.now()}
+            isLoading={!llmResponse}
           />
         )}
       </div>
 
-      <form
-        onSubmit={handleSendMessage}
-        className="p-4 border-t border-gray-200"
-      >
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="submit"
-            className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <SendHorizontal />
+      <div className="flex gap-2 p-4 border-t border-gray-200">
+        <textarea
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type a message..."
+          className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+        />
+        {isLLMGenerating ? (
+          <button className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <CircleStop onClick={handleStopGenerating} />
           </button>
-        </div>
-      </form>
+        ) : (
+          <button className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <SendHorizontal onClick={handleSendMessage} />
+          </button>
+        )}
+      </div>
 
       <Transition appear show={isLoginModalOpen} as={Fragment}>
         <Dialog
