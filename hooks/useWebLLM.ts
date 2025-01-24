@@ -7,7 +7,6 @@ import type { RequestMessage } from "@/app/client/api";
 export const useWebLLM = () => {
   const [webLLM, setWebLLM] = useState<WebLLMApi>();
   const [isWebLLMActive, setWebLLMAlive] = useState(false);
-
   const isWebLLMInitialized = useRef(false);
 
   // If service worker registration timeout, fall back to web worker

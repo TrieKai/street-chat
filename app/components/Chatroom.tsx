@@ -119,12 +119,14 @@ export default function ChatroomClient({ chatroomId }: Props) {
         const llmMessages: RequestMessage[] = messages.map((msg) => ({
           role: msg.user_id === user.user_id ? "user" : "assistant",
           content: msg.text,
+          name: msg.user_name,
         }));
 
         // Add the new message
         llmMessages.push({
           role: "user",
           content: newMessage.trim(),
+          name: user.user_name,
         });
 
         await chat({
