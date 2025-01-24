@@ -110,6 +110,7 @@ export default function ChatroomClient({ chatroomId }: Props) {
         // Add user message to Firestore
         await updateDoc(doc(db, "chatrooms", chatroomId), {
           messages: arrayUnion(userMessage),
+          users: arrayUnion(user),
         });
 
         setNewMessage("");
