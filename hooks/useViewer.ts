@@ -4,7 +4,7 @@ import { Viewer, ViewerImageEvent, ViewerOptions } from "mapillary-js";
 import { Cube, ThreeCubeRenderer } from "@/model/threeRenderer";
 import { ACCESS_TOKEN } from "@/constants/common";
 import { useGetChatRoomList } from "./useChatRoom";
-import { db } from "@/lib/firebase/firebase";
+import { db } from "@/libs/firebase/firebase";
 import { useThreeScene } from "./useThreeScene";
 import { useCubeInteraction } from "./useCubeInteraction";
 import { createCubeMesh } from "@/helpers/three";

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ServiceWorkerMLCEngine } from "@mlc-ai/web-llm";
-import { WebLLMApi } from "@/app/client/webllm";
 import { useLLMConfigStore } from "@/app/store/llmConfigStore";
-import type { RequestMessage } from "@/app/client/api";
+import { WebLLMApi } from "@/libs/web-llm/webLLMApi";
+import type { RequestMessage } from "@/types/llm";
 
 export const useWebLLM = () => {
   const [webLLM, setWebLLM] = useState<WebLLMApi>();

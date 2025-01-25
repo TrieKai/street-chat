@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
 
-import { auth, provider } from "@/lib/firebase/firebase";
+import { auth, provider } from "@/libs/firebase/firebase";
 import { createChatroom } from "@/helpers/chatroom";
 import { useRouter } from "next/navigation";
 import CreateChatroomModal from "@/app/components/CreateChatroomModal";

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CircleStop, SendHorizontal } from "lucide-react";
 import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
-import { auth, db, provider } from "@/lib/firebase/firebase";
+import { auth, db, provider } from "@/libs/firebase/firebase";
 import MessageBubble from "./Message";
 import LoginDialog from "@/app/components/LoginDialog";
 import ChatroomHeader from "./ChatroomHeader";
@@ -15,7 +15,7 @@ import { useLLMConfigStore } from "@/app/store/llmConfigStore";
 import { createAssistantId, isAssistantId } from "@/helpers/common";
 
 import type { Message, User } from "@/types/chatroom";
-import type { RequestMessage } from "../../client/api";
+import type { RequestMessage } from "@/types/llm";
 
 type Props = {
   chatroomId: string;

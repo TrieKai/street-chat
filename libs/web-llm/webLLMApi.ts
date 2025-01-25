@@ -10,10 +10,15 @@ import {
   ChatCompletionFinishReason,
   LogLevel,
 } from "@mlc-ai/web-llm";
-import { ChatOptions, LLMApi, LLMConfig, RequestMessage } from "./api";
 import { fixMessage } from "@/helpers/llm";
 import { DEFAULT_MODELS } from "@/constants/llm";
-import { CacheType } from "../store";
+import { CacheType } from "../../app/store";
+import type {
+  ChatOptions,
+  LLMApi,
+  LLMConfig,
+  RequestMessage,
+} from "@/types/llm";
 
 const KEEP_ALIVE_INTERVAL = 5_000;
 

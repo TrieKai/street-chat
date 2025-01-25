@@ -6,7 +6,7 @@ import {
   Transition,
   TransitionChild,
 } from "@headlessui/react";
-import { auth } from "@/lib/firebase/firebase";
+import { auth } from "@/libs/firebase/firebase";
 
 type CreateChatroomModalProps = {
   isOpen: boolean;

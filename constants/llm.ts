@@ -1,5 +1,5 @@
 import { prebuiltAppConfig } from "@mlc-ai/web-llm";
-import { ModelRecord } from "@/app/client/api";
+import { ModelRecord } from "@/types/api";
 import { getQuantization, getSize } from "@/helpers/llm";
 
 export enum ModelFamily {
