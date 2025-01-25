@@ -1,6 +1,6 @@
-import { db } from "@/lib/firebase/firebase";
 import { addDoc, collection, GeoPoint } from "firebase/firestore";
 import { User } from "firebase/auth";
+import { db } from "@/lib/firebase/firebase";
 import { createAssistantId } from "@/helpers/common";
 import { DB_COLLECTION_PATH } from "@/constants/common";
 import type { Chatroom } from "@/types/chatroom";
