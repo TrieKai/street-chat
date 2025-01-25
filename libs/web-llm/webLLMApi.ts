@@ -62,7 +62,7 @@ export class WebLLMApi implements LLMApi {
       this.webLLMHandler = {
         type: "webWorker",
         engine: new WebWorkerMLCEngine(
-          new Worker(new URL("../worker/web-worker.ts", import.meta.url), {
+          new Worker(new URL("../../app/worker/web-worker.ts", import.meta.url), {
             type: "module",
           }),
           engineConfig
