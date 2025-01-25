@@ -1,25 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState, Fragment } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ChevronLeft,
-  CircleStop,
-  SendHorizontal,
-  Settings,
-} from "lucide-react";
+import { CircleStop, SendHorizontal } from "lucide-react";
 import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { auth, db, provider } from "@/lib/firebase/firebase";
-import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  Transition,
-  TransitionChild,
-} from "@headlessui/react";
-import MessageBubble from "../../components/Message";
-import UserAvatar from "./UserAvatar";
+import MessageBubble from "./Message";
+import LoginDialog from "@/app/components/LoginDialog";
+import ChatroomHeader from "./ChatroomHeader";
 import { useWebLLM } from "@/hooks/useWebLLM";
 import LLMSettingsDialog from "../../components/LLMSettingsDialog";
 import { useLLMConfigStore } from "@/app/store/llmConfigStore";
@@ -32,7 +21,7 @@ type Props = {
   chatroomId: string;
 };
 
-export default function ChatroomClient({ chatroomId }: Props) {
+export default function Chatroom({ chatroomId }: Props) {
   const router = useRouter();
   const [chatroomName, setChatroomName] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -210,30 +199,15 @@ export default function ChatroomClient({ chatroomId }: Props) {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <header className="bg-white shadow-sm px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleBack}
-            className="p-2 hover:bg-gray-100 rounded-full"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-xl font-semibold">{chatroomName}</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="p-2 hover:bg-gray-100 rounded-full"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-          <UserAvatar
-            user={user}
-            handleLogin={handleLogin}
-            handleLogout={handleLogout}
-          />
-        </div>
-      </header>
+      <ChatroomHeader
+        chatroomName={chatroomName}
+        handleBack={handleBack}
+        user={user}
+        handleLogin={handleLogin}
+        handleLogout={handleLogout}
+        handleClickSettings={() => setIsSettingsOpen(true)}
+      />
+
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((message) => {
           const userInfo = users.find(
@@ -282,70 +256,11 @@ export default function ChatroomClient({ chatroomId }: Props) {
         )}
       </div>
 
-      <Transition appear show={isLoginModalOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-10"
-          onClose={() => setIsLoginModalOpen(false)}
-        >
-          <TransitionChild
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black bg-opacity-25" />
-          </TransitionChild>
-
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <TransitionChild
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <DialogTitle
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
-                  >
-                    需要登入
-                  </DialogTitle>
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">
-                      請先登入以發送訊息。點擊下方按鈕使用 Google 帳號登入。
-                    </p>
-                  </div>
-
-                  <div className="mt-4 flex justify-end gap-2">
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                      onClick={handleLogin}
-                    >
-                      使用 Google 登入
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-                      onClick={() => setIsLoginModalOpen(false)}
-                    >
-                      取消
-                    </button>
-                  </div>
-                </DialogPanel>
-              </TransitionChild>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
+      <LoginDialog
+        isLoginModalOpen={isLoginModalOpen}
+        setIsLoginModalOpen={setIsLoginModalOpen}
+        handleLogin={handleLogin}
+      />
       <LLMSettingsDialog
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}

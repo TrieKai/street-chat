@@ -18,7 +18,11 @@ interface Props {
   handleLogout: () => void;
 }
 
-export default function UserAvatar({ user, handleLogin, handleLogout }: Props) {
+export default function AvatarDropdown({
+  user,
+  handleLogin,
+  handleLogout,
+}: Props) {
   return (
     <Menu as="div" className="relative">
       <MenuButton className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
