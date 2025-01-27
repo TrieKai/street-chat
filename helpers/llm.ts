@@ -1,4 +1,4 @@
-// Fix various problems in webllm generation
+// Fix various problems in web-llm generation
 export function fixMessage(message: string) {
   // RedPajama model incorrectly includes `<human` in response
   message = message.replace(/(<human\s*)+$/, "");

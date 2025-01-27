@@ -1,6 +1,6 @@
 import { prebuiltAppConfig } from "@mlc-ai/web-llm";
-import { ModelRecord } from "@/types/api";
 import { getQuantization, getSize } from "@/helpers/llm";
+import type { ModelRecord } from "@/types/llm";
 
 export enum ModelFamily {
   LLAMA = "llama",
@@ -1423,15 +1423,3 @@ export const DEFAULT_MODELS: ModelRecord[] = DEFAULT_MODEL_BASES.filter(
   size: getSize(model.name),
   quantization: getQuantization(model.name),
 }));
-
-export const CHAT_PAGE_SIZE = 15;
-export const MAX_RENDER_MSG_COUNT = 45;
-
-export const LOG_LEVELS = {
-  TRACE: 0,
-  DEBUG: 1,
-  INFO: 2,
-  WARN: 3,
-  ERROR: 4,
-  SILENT: 5,
-};

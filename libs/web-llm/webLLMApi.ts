@@ -62,9 +62,12 @@ export class WebLLMApi implements LLMApi {
       this.webLLMHandler = {
         type: "webWorker",
         engine: new WebWorkerMLCEngine(
-          new Worker(new URL("../../app/worker/web-worker.ts", import.meta.url), {
-            type: "module",
-          }),
+          new Worker(
+            new URL("../../app/worker/web-worker.ts", import.meta.url),
+            {
+              type: "module",
+            }
+          ),
           engineConfig
         ),
       };
@@ -161,7 +164,6 @@ export class WebLLMApi implements LLMApi {
     // Compare optional fields
     const optionalFields: (keyof LLMConfig)[] = [
       "temperature",
-      "context_window_size",
       "top_p",
       "stream",
       "presence_penalty",

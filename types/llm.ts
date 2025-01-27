@@ -33,7 +33,6 @@ export interface LLMConfig {
   model: Model;
   cache: CacheType;
   temperature?: number;
-  context_window_size?: number;
   top_p?: number;
   stream?: boolean;
   presence_penalty?: number;
@@ -62,7 +61,6 @@ export interface ModelRecord {
   family: ModelFamily;
   recommended_config?: {
     temperature?: number;
-    context_window_size?: number;
     top_p?: number;
     presence_penalty?: number;
     frequency_penalty?: number;

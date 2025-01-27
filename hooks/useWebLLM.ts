@@ -28,7 +28,7 @@ export const useWebLLM = () => {
         console.log("Service Worker is activated.");
         // Check whether WebGPU is available in Service Worker
         const request = {
-          kind: "checkWebGPUAvilability",
+          kind: "checkWebGPUAvailability",
           uuid: crypto.randomUUID(),
           content: "",
         };

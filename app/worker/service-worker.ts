@@ -7,7 +7,7 @@ declare const self: ServiceWorkerGlobalScope;
 const CHATGPT_NEXT_WEB_CACHE = "chatgpt-next-web-cache";
 let handler: ServiceWorkerMLCEngineHandler;
 
-async function checkGPUAvailablity() {
+async function checkGPUAvailability() {
   if (!("gpu" in navigator)) {
     console.log("Service Worker: Web-LLM Engine Activated");
     return false;
@@ -27,9 +27,9 @@ self.addEventListener("message", (event) => {
   }
 
   const msg = event.data;
-  if (msg.kind === "checkWebGPUAvilability") {
+  if (msg.kind === "checkWebGPUAvailability") {
     console.log("Service Worker: Web-LLM Engine Activated");
-    checkGPUAvailablity().then((gpuAvailable) => {
+    checkGPUAvailability().then((gpuAvailable) => {
       console.log(
         "Service Worker: WebGPU is " +
           (gpuAvailable ? "available" : "unavailable")
