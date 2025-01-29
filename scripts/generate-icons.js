@@ -6,7 +6,7 @@ const sizes = [192, 512];
 const inputFile = path.join(__dirname, "../public/street-chat.png");
 const outputDir = path.join(__dirname, "../public/icons");
 
-async function generateIcons() {
+const generateIcons = async () => {
   try {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
@@ -21,6 +21,6 @@ async function generateIcons() {
   } catch (error) {
     console.error("Error generating icons:", error);
   }
-}
+};
 
-generateIcons();
+void generateIcons();

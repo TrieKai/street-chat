@@ -4,10 +4,10 @@ import { CacheFirst, ExpirationPlugin, Serwist } from "serwist";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 
 declare const self: ServiceWorkerGlobalScope;
-const CHATGPT_NEXT_WEB_CACHE = "chatgpt-next-web-cache";
+const WEB_LLM_WEB_CACHE = "web-llm-cache";
 let handler: ServiceWorkerMLCEngineHandler;
 
-async function checkGPUAvailability() {
+const checkGPUAvailability = async () => {
   if (!("gpu" in navigator)) {
     console.log("Service Worker: Web-LLM Engine Activated");
     return false;
@@ -18,7 +18,7 @@ async function checkGPUAvailability() {
     return false;
   }
   return true;
-}
+};
 
 self.addEventListener("message", (event) => {
   if (!handler) {
@@ -49,7 +49,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 
   event.waitUntil(
-    caches.open(CHATGPT_NEXT_WEB_CACHE).then((cache) => {
+    caches.open(WEB_LLM_WEB_CACHE).then((cache) => {
       return cache.addAll([]);
     })
   );

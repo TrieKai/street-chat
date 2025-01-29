@@ -1,9 +1,9 @@
-export function getDistanceFromLatLonInMeters(
+export const getDistanceFromLatLonInMeters = (
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
-): number {
+): number => {
   const R = 6371e3; // Earth's radius (meters)
   const φ1 = (lat1 * Math.PI) / 180;
   const φ2 = (lat2 * Math.PI) / 180;
@@ -16,4 +16,4 @@ export function getDistanceFromLatLonInMeters(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c; // distance in meters
-}
+};
