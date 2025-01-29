@@ -3,19 +3,27 @@
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-18-blue)](https://reactjs.org/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-06B6D4)](https://tailwindcss.com/)
+[![WebGPU](https://img.shields.io/badge/WebGPU-Enabled-green)](https://developer.chrome.com/docs/web-platform/webgpu/)
 
 A real-time 3D street communication platform that allows users to chat and interact in a virtual street environment.
 
 ## Features
 
-- Real-time 3D street visualization
-- Interactive chat system
-- User authentication
-- Chatroom creation and management
-- PWA support for mobile devices
-- Responsive design for all screen sizes
-- Mapillary integration
-- Three.js powered 3D rendering
+- 🌍 Real-time 3D street view chat rooms
+- 💬 Real-time messaging with Firebase
+- 🤖 Local AI chat powered by WebGPU acceleration
+- 🧠 On-device LLM inference with web-llm
+- 📱 PWA support for mobile devices
+- 🔒 Google authentication
+- 🎨 Three.js powered 3D rendering
+
+## AI Chat Features
+
+- 💻 Browser-based LLM inference
+- 🚀 WebGPU acceleration for faster responses
+- 🔒 Privacy-focused: all processing happens locally
+- 📥 One-time model download
+- ⚡ No server calls needed for AI responses
 
 ## Tech Stack
 

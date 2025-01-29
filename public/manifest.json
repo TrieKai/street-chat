@@ -1,11 +1,13 @@
 {
   "name": "Street Chat",
   "short_name": "Street Chat",
-  "description": "A real-time 3D street chat application",
+  "description": "Real-time 3D street view chat with local AI capabilities",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "theme_color": "#ffffff",
+  "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",

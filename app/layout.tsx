@@ -16,28 +16,32 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || "https://street-chat.vercel.app"
   ),
-  title: "Street Chat - Real-time 3D Street Communication",
+  title: "Street Chat - Real-time 3D Street View Chat with Local AI",
   description:
-    "Experience real-time 3D street chat with immersive communication and interactive features. Connect with others in a virtual street environment.",
+    "Experience real-time 3D street view chatting with built-in AI powered by WebGPU. Chat with AI locally in your browser while exploring street views with others.",
   keywords: [
-    "street chat",
+    "street view chat",
+    "real-time chat",
+    "WebGPU",
+    "AI chat",
+    "local LLM",
+    "web-llm",
     "3D chat",
-    "real-time communication",
-    "virtual street",
-    "social platform",
+    "browser AI",
+    "privacy focused chat",
   ],
   authors: [{ name: "Trie Chen" }],
   openGraph: {
-    title: "Street Chat - Real-time 3D Street Communication",
+    title: "Street Chat - Real-time 3D Street View Chat with Local AI",
     description:
-      "Experience real-time 3D street chat with immersive communication and interactive features",
+      "Experience real-time 3D street view chatting with built-in AI powered by WebGPU. Chat with AI locally in your browser while exploring street views with others.",
     images: ["/street-chat.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Street Chat - Real-time 3D Street Communication",
+    title: "Street Chat - Real-time 3D Street View Chat with Local AI",
     description:
-      "Experience real-time 3D street chat with immersive communication and interactive features",
+      "Experience real-time 3D street view chatting with built-in AI powered by WebGPU. Chat with AI locally in your browser while exploring street views with others.",
     images: ["/street-chat.png"],
   },
   manifest: "/manifest.json",
