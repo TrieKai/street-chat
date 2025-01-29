@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CircleStop, SendHorizontal } from "lucide-react";
+import { ArrowDown, CircleStop, SendHorizontal } from "lucide-react";
 import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { auth, db, provider } from "@/libs/firebase/firebase";
@@ -32,6 +32,8 @@ export default function Chatroom({ chatroomId }: Props) {
   const [isLLMGenerating, setIsLLMGenerating] = useState(false);
   const [llmResponse, setLLMResponse] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   const { webLLM, chat } = useWebLLM();
   const { llmConfig } = useLLMConfigStore();
@@ -65,6 +67,16 @@ export default function Chatroom({ chatroomId }: Props) {
       console.error("Error signing out:", error);
     }
   }, [router]);
+
+  const scrollToBottom = useCallback((): void => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>): void => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShowScrollButton(!isNearBottom);
+  }, []);
 
   const handleSendMessage = useCallback(
     async (e: React.FormEvent): Promise<void> => {
@@ -197,6 +209,10 @@ export default function Chatroom({ chatroomId }: Props) {
     };
   }, [chatroomId]);
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <ChatroomHeader
@@ -208,7 +224,7 @@ export default function Chatroom({ chatroomId }: Props) {
         handleClickSettings={() => setIsSettingsOpen(true)}
       />
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4" onScroll={handleScroll}>
         {messages.map((message) => {
           const userInfo = users.find(
             (user) => user.user_id === message.user_id
@@ -235,7 +251,17 @@ export default function Chatroom({ chatroomId }: Props) {
             isLoading={!llmResponse}
           />
         )}
+        <div ref={messagesEndRef} />
       </div>
+
+      {showScrollButton && (
+        <button
+          onClick={scrollToBottom}
+          className="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-white text-primary hover:bg-gray-100 rounded-full p-3 shadow-lg transition-all duration-200"
+        >
+          <ArrowDown className="h-5 w-5" />
+        </button>
+      )}
 
       <div className="flex gap-2 p-4 border-t border-gray-200">
         <textarea
