@@ -1,10 +1,11 @@
-import { forwardRef } from "react";
+import { forwardRef, useCallback, useState } from "react";
 import clsx from "clsx";
-import { LoaderCircle } from "lucide-react";
+import { Check, Copy, LoaderCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import HeadShot from "@/app/components/HeadShot";
+import { Button } from "@headlessui/react";
 
 interface IMessage {
   type: "user" | "assistant";
@@ -33,6 +34,19 @@ const Message = forwardRef<HTMLDivElement, IMessage>(
     },
     ref
   ): JSX.Element => {
+    const [isCopied, setIsCopied] = useState(false);
+    const [isHover, setIsHover] = useState(false);
+
+    const handleCopy = useCallback(async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch (error) {
+        console.error("Failed to copy text:", error);
+      }
+    }, [text]);
+
     return (
       <div
         ref={ref}
@@ -59,6 +73,8 @@ const Message = forwardRef<HTMLDivElement, IMessage>(
             "flex flex-col max-w-[70%]",
             isSelf ? "items-end" : "items-start"
           )}
+          onMouseEnter={() => setIsHover(true)}
+          onMouseLeave={() => setIsHover(false)}
         >
           <span className="text-sm text-gray-600 mb-1">{userName}</span>
 
@@ -72,12 +88,27 @@ const Message = forwardRef<HTMLDivElement, IMessage>(
               {isLoading ? (
                 <LoaderCircle className="animate-spin text-gray-600" />
               ) : (
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                >
-                  {text}
-                </ReactMarkdown>
+                <div className="relative">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeHighlight]}
+                  >
+                    {text}
+                  </ReactMarkdown>
+
+                  {isHover && (
+                    <Button
+                      className="absolute bottom-[-4rem] left-0 p-2 text-gray-500 hover:text-gray-700 transition-colors duration-200 bg-white/80 rounded-md"
+                      onClick={handleCopy}
+                    >
+                      {isCopied ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
 
