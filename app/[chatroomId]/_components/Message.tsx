@@ -1,8 +1,10 @@
 import { forwardRef } from "react";
 import clsx from "clsx";
 import { LoaderCircle } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 import HeadShot from "@/app/components/HeadShot";
-import { formatMessage } from "@/helpers/common";
 
 interface IMessage {
   type: "user" | "assistant";
@@ -70,9 +72,12 @@ const Message = forwardRef<HTMLDivElement, IMessage>(
               {isLoading ? (
                 <LoaderCircle className="animate-spin text-gray-600" />
               ) : (
-                <span
-                  dangerouslySetInnerHTML={{ __html: formatMessage(text) }}
-                />
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
+                >
+                  {text}
+                </ReactMarkdown>
               )}
             </div>
 
