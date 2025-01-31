@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import {
+  Button,
   Dialog,
   DialogPanel,
   DialogTitle,
@@ -62,20 +63,18 @@ export default function LoginDialog({
                 </div>
 
                 <div className="mt-4 flex justify-end gap-2">
-                  <button
-                    type="button"
+                  <Button
                     className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                     onClick={handleLogin}
                   >
                     使用 Google 登入
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
                     className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
                     onClick={() => setIsLoginModalOpen(false)}
                   >
                     取消
-                  </button>
+                  </Button>
                 </div>
               </DialogPanel>
             </TransitionChild>

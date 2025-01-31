@@ -1,8 +1,10 @@
 import { FormEvent, Fragment, useState } from "react";
 import {
+  Button,
   Dialog,
   DialogPanel,
   DialogTitle,
+  Input,
   Transition,
   TransitionChild,
 } from "@headlessui/react";
@@ -70,8 +72,7 @@ export default function CreateChatroomModal({
                     </p>
                   )}
                   <form onSubmit={handleSubmit}>
-                    <input
-                      type="text"
+                    <Input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="輸入聊天室名稱"
@@ -79,19 +80,18 @@ export default function CreateChatroomModal({
                       required
                     />
                     <div className="mt-4 flex justify-end gap-2">
-                      <button
-                        type="button"
+                      <Button
                         className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
                         onClick={onClose}
                       >
                         取消
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                       >
                         建立
-                      </button>
+                      </Button>
                     </div>
                   </form>
                 </div>

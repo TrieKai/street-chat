@@ -1,8 +1,10 @@
 import { Fragment } from "react";
 import {
+  Button,
   Dialog,
   DialogPanel,
   DialogTitle,
+  Input,
   Menu,
   MenuButton,
   MenuHeading,
@@ -85,14 +87,14 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                             </MenuHeading>
                             {family.models.map((model) => (
                               <MenuItem key={model.name}>
-                                <button
+                                <Button
                                   onClick={() =>
                                     updateLLMConfig({ model: model.name })
                                   }
                                   className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-gray-800 hover:bg-gray-100 data-[focus]:bg-gray-200"
                                 >
                                   {model.name} ({model.provider})
-                                </button>
+                                </Button>
                               </MenuItem>
                             ))}
                           </MenuSection>
@@ -115,14 +117,14 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                       >
                         {CACHE_OPTIONS.map((option) => (
                           <MenuItem key={option.value}>
-                            <button
+                            <Button
                               onClick={() =>
                                 updateLLMConfig({ cache: option.value })
                               }
                               className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-gray-800 hover:bg-gray-100 data-[focus]:bg-gray-200"
                             >
                               {option.label}
-                            </button>
+                            </Button>
                           </MenuItem>
                         ))}
                       </MenuItems>
@@ -133,7 +135,7 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                     <label className="block text-sm font-medium text-gray-700">
                       Temperature ({llmConfig.temperature})
                     </label>
-                    <input
+                    <Input
                       type="range"
                       min="0"
                       max="1"
@@ -152,7 +154,7 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                     <label className="block text-sm font-medium text-gray-700">
                       Top P ({llmConfig.topP})
                     </label>
-                    <input
+                    <Input
                       type="range"
                       min="0"
                       max="1"
@@ -171,7 +173,7 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                     <label className="block text-sm font-medium text-gray-700">
                       Max Length
                     </label>
-                    <input
+                    <Input
                       type="number"
                       value={llmConfig.maxTokens}
                       onChange={(e) =>
@@ -185,13 +187,12 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                 </div>
 
                 <div className="mt-6">
-                  <button
-                    type="button"
+                  <Button
                     className="inline-flex justify-center rounded-md border border-transparent bg-indigo-100 px-4 py-2 text-sm font-medium text-indigo-900 hover:bg-indigo-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                     onClick={onClose}
                   >
                     Close
-                  </button>
+                  </Button>
                 </div>
               </DialogPanel>
             </TransitionChild>

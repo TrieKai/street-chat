@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button, Textarea } from "@headlessui/react";
 import { ArrowDown, CircleStop, SendHorizontal } from "lucide-react";
 import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
@@ -255,16 +256,16 @@ export default function Chatroom({ chatroomId }: Props) {
       </div>
 
       {showScrollButton && (
-        <button
+        <Button
           onClick={scrollToBottom}
           className="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-white text-primary hover:bg-gray-100 rounded-full p-3 shadow-lg transition-all duration-200"
         >
           <ArrowDown className="h-5 w-5" />
-        </button>
+        </Button>
       )}
 
       <div className="flex gap-2 p-4 border-t border-gray-200">
-        <textarea
+        <Textarea
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -272,13 +273,13 @@ export default function Chatroom({ chatroomId }: Props) {
           className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
         {isLLMGenerating ? (
-          <button className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <Button className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <CircleStop onClick={handleStopGenerating} />
-          </button>
+          </Button>
         ) : (
-          <button className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <Button className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <SendHorizontal onClick={handleSendMessage} />
-          </button>
+          </Button>
         )}
       </div>
 

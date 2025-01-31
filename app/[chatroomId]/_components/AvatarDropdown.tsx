@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import {
+  Button,
   Menu,
   MenuButton,
   MenuItem,
@@ -50,7 +51,7 @@ export default function AvatarDropdown({
             <MenuItem>
               {({ focus }) =>
                 user ? (
-                  <button
+                  <Button
                     className={clsx(
                       "group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-900",
                       focus && "bg-gray-100"
@@ -58,9 +59,9 @@ export default function AvatarDropdown({
                     onClick={handleLogout}
                   >
                     登出
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
                     className={clsx(
                       "group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-900",
                       focus && "bg-gray-100"
@@ -68,7 +69,7 @@ export default function AvatarDropdown({
                     onClick={handleLogin}
                   >
                     登入
-                  </button>
+                  </Button>
                 )
               }
             </MenuItem>
