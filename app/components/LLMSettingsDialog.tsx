@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useCallback } from "react";
 import {
   Button,
   Dialog,
@@ -14,6 +14,7 @@ import {
   Transition,
   TransitionChild,
 } from "@headlessui/react";
+import { prebuiltAppConfig } from "@mlc-ai/web-llm";
 import {
   useLLMConfigStore,
   MODEL_FAMILIES,
@@ -32,6 +33,13 @@ const CACHE_OPTIONS = [
 
 export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
   const { llmConfig, updateLLMConfig } = useLLMConfigStore();
+
+  const getVramRequiredMB = useCallback((modelId: string): number => {
+    const model = prebuiltAppConfig.model_list.find(
+      (m) => m.model_id === modelId
+    );
+    return model?.vram_required_MB || 0;
+  }, []);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -85,18 +93,24 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                             <MenuHeading className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">
                               {family.family.toUpperCase()}
                             </MenuHeading>
-                            {family.models.map((model) => (
-                              <MenuItem key={model.name}>
-                                <Button
-                                  onClick={() =>
-                                    updateLLMConfig({ model: model.name })
-                                  }
-                                  className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-gray-800 hover:bg-gray-100 data-[focus]:bg-gray-200"
-                                >
-                                  {model.name} ({model.provider})
-                                </Button>
-                              </MenuItem>
-                            ))}
+                            {family.models.map((model) => {
+                              const vramMB = getVramRequiredMB(model.name);
+                              return (
+                                <MenuItem key={model.name}>
+                                  <Button
+                                    onClick={() =>
+                                      updateLLMConfig({ model: model.name })
+                                    }
+                                    className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-gray-800 hover:bg-gray-100 data-[focus]:bg-gray-200"
+                                  >
+                                    {model.name} ({model.provider}) -
+                                    {vramMB
+                                      ? `${(vramMB / 1024).toFixed(2)}GB`
+                                      : "N/A"}
+                                  </Button>
+                                </MenuItem>
+                              );
+                            })}
                           </MenuSection>
                         ))}
                       </MenuItems>
