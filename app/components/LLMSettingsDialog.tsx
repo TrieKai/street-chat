@@ -34,11 +34,11 @@ const CACHE_OPTIONS = [
 export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
   const { llmConfig, updateLLMConfig } = useLLMConfigStore();
 
-  const getVramRequiredMB = useCallback((modelId: string): number => {
+  const getVramRequiredGB = useCallback((modelId: string): string => {
     const model = prebuiltAppConfig.model_list.find(
       (m) => m.model_id === modelId
     );
-    return model?.vram_required_MB || 0;
+    return ((model?.vram_required_MB || 0) / 1024).toFixed(2);
   }, []);
 
   return (
@@ -81,39 +81,82 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
                       Model
                     </label>
                     <Menu>
-                      <MenuButton className="w-full inline-flex items-center gap-2 rounded-md bg-white py-1.5 px-3 text-sm/6 font-semibold text-gray-800 shadow-md shadow-gray-200/50 focus:outline-none data-[hover]:bg-gray-100 data-[open]:bg-gray-100 data-[focus]:outline-1 data-[focus]:outline-gray-800">
-                        {llmConfig.model}
-                      </MenuButton>
-                      <MenuItems
-                        anchor="bottom start"
-                        className="w-72 origin-top-right rounded-xl border border-gray-200 bg-white p-1 text-sm/6 text-gray-800 transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
-                      >
-                        {MODEL_FAMILIES.map((family) => (
-                          <MenuSection key={family.family}>
-                            <MenuHeading className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">
-                              {family.family.toUpperCase()}
-                            </MenuHeading>
-                            {family.models.map((model) => {
-                              const vramMB = getVramRequiredMB(model.name);
+                      {({ close }) => (
+                        <div>
+                          <MenuButton className="w-full inline-flex items-center gap-2 rounded-md bg-white py-1.5 px-3 text-sm/6 font-semibold text-gray-800">
+                            {llmConfig.model}
+                          </MenuButton>
+                          <MenuItems
+                            anchor="bottom start"
+                            className="w-72 rounded-xl border border-gray-200 bg-white p-1 text-sm/6 text-gray-800"
+                          >
+                            {MODEL_FAMILIES.map((family) => {
+                              // Group models by base name (removing quantization info)
+                              const modelGroups = family.models.reduce(
+                                (groups, model) => {
+                                  const baseName = model.name.split("-q")[0]; // Split at quantization part
+                                  if (!groups[baseName]) {
+                                    groups[baseName] = [];
+                                  }
+                                  groups[baseName].push(model);
+                                  return groups;
+                                },
+                                {} as Record<string, typeof family.models>
+                              );
+
                               return (
-                                <MenuItem key={model.name}>
-                                  <Button
-                                    onClick={() =>
-                                      updateLLMConfig({ model: model.name })
-                                    }
-                                    className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 text-gray-800 hover:bg-gray-100 data-[focus]:bg-gray-200"
-                                  >
-                                    {model.name} ({model.provider}) -
-                                    {vramMB
-                                      ? `${(vramMB / 1024).toFixed(2)}GB`
-                                      : "N/A"}
-                                  </Button>
-                                </MenuItem>
+                                <MenuSection key={family.family}>
+                                  <MenuHeading className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">
+                                    {family.family.toUpperCase()}
+                                  </MenuHeading>
+                                  {Object.entries(modelGroups).map(
+                                    ([baseName, models]) => (
+                                      <Menu as="div" key={baseName}>
+                                        <MenuButton className="w-full text-left px-3 py-1.5 text-sm/6 text-gray-800 rounded hover:bg-gray-100">
+                                          {baseName}
+                                        </MenuButton>
+                                        <MenuItems
+                                          anchor="right start"
+                                          className="w-72 rounded-xl border border-gray-200 bg-white p-1 text-sm/6 text-gray-800 ml-1"
+                                        >
+                                          {models.map((model) => {
+                                            const vramGB = getVramRequiredGB(
+                                              model.name
+                                            );
+                                            return (
+                                              <MenuItem key={model.name}>
+                                                <Button
+                                                  onClick={() => {
+                                                    close();
+                                                    updateLLMConfig({
+                                                      model: model.name,
+                                                    });
+                                                  }}
+                                                  className="w-full text-left px-3 py-1.5 text-sm/6 text-gray-800 rounded hover:bg-gray-100"
+                                                >
+                                                  <div className="flex items-center justify-between">
+                                                    <span>
+                                                      {model.quantization?.toUpperCase() ||
+                                                        "N/A"}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500">
+                                                      {vramGB}GB VRAM
+                                                    </span>
+                                                  </div>
+                                                </Button>
+                                              </MenuItem>
+                                            );
+                                          })}
+                                        </MenuItems>
+                                      </Menu>
+                                    )
+                                  )}
+                                </MenuSection>
                               );
                             })}
-                          </MenuSection>
-                        ))}
-                      </MenuItems>
+                          </MenuItems>
+                        </div>
+                      )}
                     </Menu>
                   </div>
 
