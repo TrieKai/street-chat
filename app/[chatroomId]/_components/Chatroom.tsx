@@ -4,7 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Textarea } from "@headlessui/react";
 import { ArrowDown, CircleStop, SendHorizontal } from "lucide-react";
-import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
+import {
+  doc,
+  onSnapshot,
+  updateDoc,
+  arrayUnion,
+  getDoc,
+} from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { auth, db, provider } from "@/libs/firebase/firebase";
 import MessageBubble from "./Message";
@@ -26,12 +32,12 @@ export default function Chatroom({ chatroomId }: Props) {
   const router = useRouter();
   const [chatroomName, setChatroomName] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [newUserMessage, setNewUserMessage] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLLMGenerating, setIsLLMGenerating] = useState(false);
-  const [llmResponse, setLLMResponse] = useState("");
+  const [llmGeneratingResponse, setLLMGeneratingResponse] = useState(""); // response of LLM while generating
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -88,14 +94,14 @@ export default function Chatroom({ chatroomId }: Props) {
         return;
       }
 
-      if (!newMessage.trim()) {
+      if (!newUserMessage.trim()) {
         return;
       }
 
       const timestamp = Date.now();
       const userMessage: Message = {
         id: crypto.randomUUID(),
-        text: newMessage.trim(),
+        text: newUserMessage.trim(),
         timestamp,
         user_id: user.user_id,
         user_name: user.user_name,
@@ -108,7 +114,22 @@ export default function Chatroom({ chatroomId }: Props) {
           users: arrayUnion(user),
         });
 
-        setNewMessage("");
+        setNewUserMessage(""); // clear user input
+
+        // Add empty bot message to Firestore
+        const botMessageId = crypto.randomUUID();
+        const emptyBotMessage: Message = {
+          id: botMessageId,
+          text: "",
+          timestamp: Date.now(),
+          user_id: createAssistantId(),
+          user_name: llmConfig.model,
+        };
+        await updateDoc(doc(db, "chatrooms", chatroomId), {
+          messages: arrayUnion(emptyBotMessage),
+        }).catch((error) => {
+          console.error("Error saving LLM response:", error);
+        });
 
         // Generate LLM response
         setIsLLMGenerating(true);
@@ -121,7 +142,7 @@ export default function Chatroom({ chatroomId }: Props) {
         // Add the new message
         llmMessages.push({
           role: "user",
-          content: newMessage.trim(),
+          content: newUserMessage.trim(),
           name: user.user_name,
         });
 
@@ -129,30 +150,39 @@ export default function Chatroom({ chatroomId }: Props) {
           messages: llmMessages,
           onUpdate: (message): void => {
             setIsLLMGenerating(true);
-            setLLMResponse(message);
+            setLLMGeneratingResponse(message);
           },
-          onFinish: (message): void => {
-            const llmMessageData: Message = {
-              id: crypto.randomUUID(),
-              text: message,
-              timestamp: Date.now(),
-              user_id: createAssistantId(),
-              user_name: llmConfig.model,
-            };
+          onFinish: async (message): Promise<void> => {
+            const currentChatroomDataSnapshot = await getDoc(
+              doc(db, "chatrooms", chatroomId)
+            );
+            const currentChatroomData = currentChatroomDataSnapshot.data();
+            const currentMessages: Message[] =
+              currentChatroomData?.messages || [];
+            // Find the bot message and update it
+            const updatedMessages = currentMessages.map((msg) => {
+              if (msg.id === botMessageId) {
+                return {
+                  ...msg,
+                  text: message,
+                };
+              }
+              return msg;
+            });
 
-            void updateDoc(doc(db, "chatrooms", chatroomId), {
-              messages: arrayUnion(llmMessageData),
+            await updateDoc(doc(db, "chatrooms", chatroomId), {
+              messages: updatedMessages,
             }).catch((error) => {
-              console.error("Error saving LLM response:", error);
+              console.error("Error updating document:", error);
             });
 
             setIsLLMGenerating(false);
-            setLLMResponse("");
+            setLLMGeneratingResponse("");
           },
           onError: (error): void => {
             console.error("LLM Error:", error);
             setIsLLMGenerating(false);
-            setLLMResponse("");
+            setLLMGeneratingResponse("");
           },
         });
       } catch (error) {
@@ -160,7 +190,7 @@ export default function Chatroom({ chatroomId }: Props) {
         setIsLLMGenerating(false);
       }
     },
-    [user, newMessage, chatroomId, messages, chat, llmConfig.model]
+    [user, newUserMessage, chatroomId, messages, chat, llmConfig.model]
   );
 
   const handleStopGenerating = useCallback((): void => {
@@ -235,23 +265,14 @@ export default function Chatroom({ chatroomId }: Props) {
               key={message.id}
               type={isAssistantId(message.user_id) ? "assistant" : "user"}
               isSelf={message.user_id === user?.user_id}
-              text={message.text}
+              text={message.text || llmGeneratingResponse}
               userName={message.user_name}
               time={message.timestamp}
               userAvatarUrl={userInfo?.photo_url}
+              isLoading={!llmGeneratingResponse && !message.text}
             />
           );
         })}
-        {isLLMGenerating && (
-          <MessageBubble
-            isSelf={false}
-            type="assistant"
-            text={llmResponse}
-            userName={llmConfig.model}
-            time={Date.now()}
-            isLoading={!llmResponse}
-          />
-        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -266,8 +287,8 @@ export default function Chatroom({ chatroomId }: Props) {
 
       <div className="flex gap-2 p-4 border-t border-gray-200">
         <Textarea
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          value={newUserMessage}
+          onChange={(e) => setNewUserMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
