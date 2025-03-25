@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Button, Textarea } from "@headlessui/react";
 import { ArrowDown, CircleStop, SendHorizontal } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ import MessageBubble from "./Message";
 import LoginDialog from "@/app/components/LoginDialog";
 import ChatroomHeader from "./ChatroomHeader";
 import { useWebLLM } from "@/hooks/useWebLLM";
+import { useBeforeUnload } from "@/hooks/useBeforeUnload";
 import LLMSettingsDialog from "../../components/LLMSettingsDialog";
 import { useLLMConfigStore } from "@/app/store/llmConfigStore";
 import { createAssistantId, isAssistantId } from "@/helpers/common";
@@ -44,10 +45,23 @@ export default function Chatroom({ chatroomId }: Props) {
 
   const { webLLM, chat } = useWebLLM();
   const { llmConfig } = useLLMConfigStore();
+  const { handleUpdateMessageError } = useBeforeUnload({
+    chatroomId,
+    messageId: messages.find((msg) => msg.isGenerating)?.id,
+    isGenerating: isLLMGenerating,
+  });
 
   const handleBack = useCallback((): void => {
+    if (isLLMGenerating) {
+      const confirmed = window.confirm("正在產生訊息中，確定要離開嗎？");
+      if (confirmed) {
+        void handleUpdateMessageError();
+        router.push("/");
+      }
+      return;
+    }
     router.push("/");
-  }, [router]);
+  }, [handleUpdateMessageError, isLLMGenerating, router]);
 
   const handleLogin = useCallback((): void => {
     void signInWithPopup(auth, provider)
@@ -124,6 +138,8 @@ export default function Chatroom({ chatroomId }: Props) {
           timestamp: Date.now(),
           user_id: createAssistantId(),
           user_name: llmConfig.model,
+          isThinking: true,
+          isGenerating: true,
         };
         await updateDoc(doc(db, "chatrooms", chatroomId), {
           messages: arrayUnion(emptyBotMessage),
@@ -148,9 +164,33 @@ export default function Chatroom({ chatroomId }: Props) {
 
         await chat({
           messages: llmMessages,
-          onUpdate: (message): void => {
+          onUpdate: async (message): Promise<void> => {
             setIsLLMGenerating(true);
             setLLMGeneratingResponse(message);
+
+            // TODO: update bot message in Firestore
+            const currentChatroomDataSnapshot = await getDoc(
+              doc(db, "chatrooms", chatroomId)
+            );
+            const currentChatroomData = currentChatroomDataSnapshot.data();
+            const currentMessages: Message[] =
+              currentChatroomData?.messages || [];
+            // Find the bot message and update it
+            const finalMessages = currentMessages.map((msg) => {
+              if (msg.id === botMessageId) {
+                return {
+                  ...msg,
+                  text: message,
+                  isThinking: false,
+                };
+              }
+              return msg;
+            });
+            updateDoc(doc(db, "chatrooms", chatroomId), {
+              messages: finalMessages,
+            }).catch((error) => {
+              console.error("Error updating document:", error);
+            });
           },
           onFinish: async (message): Promise<void> => {
             const currentChatroomDataSnapshot = await getDoc(
@@ -170,8 +210,19 @@ export default function Chatroom({ chatroomId }: Props) {
               return msg;
             });
 
+            const finalMessages = updatedMessages.map((msg) => {
+              if (msg.id === botMessageId) {
+                return {
+                  ...msg,
+                  text: message,
+                  isGenerating: false,
+                };
+              }
+              return msg;
+            });
+
             await updateDoc(doc(db, "chatrooms", chatroomId), {
-              messages: updatedMessages,
+              messages: finalMessages,
             }).catch((error) => {
               console.error("Error updating document:", error);
             });
@@ -179,8 +230,33 @@ export default function Chatroom({ chatroomId }: Props) {
             setIsLLMGenerating(false);
             setLLMGeneratingResponse("");
           },
-          onError: (error): void => {
+          onError: async (error): Promise<void> => {
             console.error("LLM Error:", error);
+            const currentChatroomDataSnapshot = await getDoc(
+              doc(db, "chatrooms", chatroomId)
+            );
+            const currentChatroomData = currentChatroomDataSnapshot.data();
+            const currentMessages: Message[] =
+              currentChatroomData?.messages || [];
+
+            const errorMessages = currentMessages.map((msg) => {
+              if (msg.id === botMessageId) {
+                return {
+                  ...msg,
+                  isThinking: false,
+                  isGenerating: false,
+                  isError: true,
+                };
+              }
+              return msg;
+            });
+
+            await updateDoc(doc(db, "chatrooms", chatroomId), {
+              messages: errorMessages,
+            }).catch((error) => {
+              console.error("Error updating error status:", error);
+            });
+
             setIsLLMGenerating(false);
             setLLMGeneratingResponse("");
           },
@@ -188,6 +264,7 @@ export default function Chatroom({ chatroomId }: Props) {
       } catch (error) {
         console.error("Error sending message:", error);
         setIsLLMGenerating(false);
+        setLLMGeneratingResponse("");
       }
     },
     [user, newUserMessage, chatroomId, messages, chat, llmConfig.model]
@@ -269,7 +346,8 @@ export default function Chatroom({ chatroomId }: Props) {
               userName={message.user_name}
               time={message.timestamp}
               userAvatarUrl={userInfo?.photo_url}
-              isLoading={!llmGeneratingResponse && !message.text}
+              isLoading={message.isThinking}
+              isError={message.isError}
             />
           );
         })}

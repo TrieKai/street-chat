@@ -106,7 +106,7 @@ export default function LLMSettingsDialog({ isOpen, onClose }: Props) {
 
                               return (
                                 <MenuSection key={family.family}>
-                                  <MenuHeading className="px-3 py-1 text-xs font-semibold text-gray-500 uppercase">
+                                  <MenuHeading className="px-3 py-1 text-base font-semibold text-gray-500 uppercase">
                                     {family.family.toUpperCase()}
                                   </MenuHeading>
                                   {Object.entries(modelGroups).map(

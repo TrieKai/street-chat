@@ -14,6 +14,9 @@ export interface Message {
   user_name: string;
   text: string;
   timestamp: number;
+  isThinking?: boolean;
+  isGenerating?: boolean;
+  isError?: boolean;
 }
 
 export interface User {
