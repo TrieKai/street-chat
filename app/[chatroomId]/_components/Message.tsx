@@ -15,6 +15,7 @@ interface IMessage {
   text: string;
   time: number;
   isLoading?: boolean;
+  isError?: boolean;
   className?: string;
 }
 
@@ -30,6 +31,7 @@ const Message = forwardRef<HTMLDivElement, IMessage>(
       text,
       time,
       isLoading = false,
+      isError = false,
       className,
     },
     ref
@@ -85,9 +87,13 @@ const Message = forwardRef<HTMLDivElement, IMessage>(
                 isSelf ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-900"
               )}
             >
-              {isLoading ? (
+              {isError && (
+                <span className="text-red-500">Error loading message</span>
+              )}
+              {isLoading && !isError && (
                 <LoaderCircle className="animate-spin text-gray-600" />
-              ) : (
+              )}
+              {!isLoading && !isError && (
                 <div className="relative">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
