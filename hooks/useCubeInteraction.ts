@@ -1,8 +1,10 @@
 import { useCallback, useRef } from "react";
-import { Event, Object3D, Raycaster, Scene, Sprite } from "three";
+import { Sprite } from "three";
 import { ViewerMouseEvent } from "mapillary-js";
 import { getDistanceFromLatLonInMeters } from "@/helpers/distance";
-import { Viewer } from "mapillary-js";
+
+import type { Object3D, Object3DEventMap, Raycaster, Scene } from "three";
+import type { Viewer } from "mapillary-js";
 
 interface UseCubeInteractionProps {
   scene: Scene;
@@ -23,7 +25,7 @@ export const useCubeInteraction = ({
   setPendingLocation,
   onChatroomSelect,
 }: UseCubeInteractionProps) => {
-  const hoveredCube = useRef<Object3D<Event> | null>(null);
+  const hoveredCube = useRef<Object3D<Object3DEventMap> | null>(null);
 
   const handleCubeMouseOver = useCallback(
     (_event: ViewerMouseEvent): void => {

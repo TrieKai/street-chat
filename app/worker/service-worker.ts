@@ -1,6 +1,7 @@
 import { ServiceWorkerMLCEngineHandler } from "@mlc-ai/web-llm";
 import { defaultCache } from "@serwist/next/worker";
 import { CacheFirst, ExpirationPlugin, Serwist } from "serwist";
+
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 
 declare const self: ServiceWorkerGlobalScope;
