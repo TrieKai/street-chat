@@ -1,16 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button, Textarea } from "@headlessui/react";
 import { ArrowDown, CircleStop, SendHorizontal } from "lucide-react";
-import {
-  doc,
-  onSnapshot,
-  updateDoc,
-  arrayUnion,
-  getDoc,
-} from "firebase/firestore";
+import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 import { auth, db, provider } from "@/libs/firebase/firebase";
 import MessageBubble from "./Message";
@@ -18,9 +12,14 @@ import LoginDialog from "@/app/components/LoginDialog";
 import ChatroomHeader from "./ChatroomHeader";
 import { useWebLLM } from "@/hooks/useWebLLM";
 import { useBeforeUnload } from "@/hooks/useBeforeUnload";
-import LLMSettingsDialog from "../../components/LLMSettingsDialog";
+import LLMSettingsDialog from "@/app/components/LLMSettingsDialog";
 import { useLLMConfigStore } from "@/app/store/llmConfigStore";
 import { createAssistantId, isAssistantId } from "@/helpers/common";
+import {
+  getRemoteChatroomMessages,
+  updateLocalBotMessage,
+  updateRemoteChatroomMessages,
+} from "../_helpers/message";
 
 import type { Message, User } from "@/types/chatroom";
 import type { RequestMessage } from "@/types/llm";
@@ -143,8 +142,6 @@ export default function Chatroom({ chatroomId }: Props) {
         };
         await updateDoc(doc(db, "chatrooms", chatroomId), {
           messages: arrayUnion(emptyBotMessage),
-        }).catch((error) => {
-          console.error("Error saving LLM response:", error);
         });
 
         // Generate LLM response
@@ -168,94 +165,45 @@ export default function Chatroom({ chatroomId }: Props) {
             setIsLLMGenerating(true);
             setLLMGeneratingResponse(message);
 
-            // TODO: update bot message in Firestore
-            const currentChatroomDataSnapshot = await getDoc(
-              doc(db, "chatrooms", chatroomId)
-            );
-            const currentChatroomData = currentChatroomDataSnapshot.data();
-            const currentMessages: Message[] =
-              currentChatroomData?.messages || [];
-            // Find the bot message and update it
-            const finalMessages = currentMessages.map((msg) => {
-              if (msg.id === botMessageId) {
-                return {
-                  ...msg,
-                  text: message,
-                  isThinking: false,
-                };
+            const currentMessages = await getRemoteChatroomMessages(chatroomId);
+            const updatedMessages = updateLocalBotMessage(
+              currentMessages,
+              botMessageId,
+              {
+                text: message,
+                isThinking: false,
               }
-              return msg;
-            });
-            updateDoc(doc(db, "chatrooms", chatroomId), {
-              messages: finalMessages,
-            }).catch((error) => {
-              console.error("Error updating document:", error);
-            });
+            );
+            await updateRemoteChatroomMessages(chatroomId, updatedMessages);
           },
           onFinish: async (message): Promise<void> => {
-            const currentChatroomDataSnapshot = await getDoc(
-              doc(db, "chatrooms", chatroomId)
+            const currentMessages = await getRemoteChatroomMessages(chatroomId);
+            const finalMessages = updateLocalBotMessage(
+              currentMessages,
+              botMessageId,
+              {
+                text: message,
+                isGenerating: false,
+              }
             );
-            const currentChatroomData = currentChatroomDataSnapshot.data();
-            const currentMessages: Message[] =
-              currentChatroomData?.messages || [];
-            // Find the bot message and update it
-            const updatedMessages = currentMessages.map((msg) => {
-              if (msg.id === botMessageId) {
-                return {
-                  ...msg,
-                  text: message,
-                };
-              }
-              return msg;
-            });
-
-            const finalMessages = updatedMessages.map((msg) => {
-              if (msg.id === botMessageId) {
-                return {
-                  ...msg,
-                  text: message,
-                  isGenerating: false,
-                };
-              }
-              return msg;
-            });
-
-            await updateDoc(doc(db, "chatrooms", chatroomId), {
-              messages: finalMessages,
-            }).catch((error) => {
-              console.error("Error updating document:", error);
-            });
+            await updateRemoteChatroomMessages(chatroomId, finalMessages);
 
             setIsLLMGenerating(false);
             setLLMGeneratingResponse("");
           },
           onError: async (error): Promise<void> => {
             console.error("LLM Error:", error);
-            const currentChatroomDataSnapshot = await getDoc(
-              doc(db, "chatrooms", chatroomId)
-            );
-            const currentChatroomData = currentChatroomDataSnapshot.data();
-            const currentMessages: Message[] =
-              currentChatroomData?.messages || [];
-
-            const errorMessages = currentMessages.map((msg) => {
-              if (msg.id === botMessageId) {
-                return {
-                  ...msg,
-                  isThinking: false,
-                  isGenerating: false,
-                  isError: true,
-                };
+            const currentMessages = await getRemoteChatroomMessages(chatroomId);
+            const errorMessages = updateLocalBotMessage(
+              currentMessages,
+              botMessageId,
+              {
+                isThinking: false,
+                isGenerating: false,
+                isError: true,
               }
-              return msg;
-            });
-
-            await updateDoc(doc(db, "chatrooms", chatroomId), {
-              messages: errorMessages,
-            }).catch((error) => {
-              console.error("Error updating error status:", error);
-            });
+            );
+            await updateRemoteChatroomMessages(chatroomId, errorMessages);
 
             setIsLLMGenerating(false);
             setLLMGeneratingResponse("");
