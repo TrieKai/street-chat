@@ -38,7 +38,7 @@ const HeadShot = ({
   );
 
   useEffect(() => {
-    const getImageURL = async () => {
+    const getImageURL = async (): Promise<void> => {
       const imageURL = await checkImageLoadable(headShotURL);
       setImageURL(imageURL);
     };
