@@ -20,6 +20,7 @@ import { useBeforeUnload } from "@/hooks/useBeforeUnload";
 import LLMSettingsDialog from "@/app/components/LLMSettingsDialog";
 import { useLLMConfigStore } from "@/app/store/llmConfigStore";
 import { createAssistantId, isAssistantId } from "@/helpers/common";
+import { getAnonymousUserName } from "@/helpers/user";
 import {
   getRemoteChatroomMessages,
   updateLocalBotMessage,
@@ -89,7 +90,7 @@ export default function Chatroom({ chatroomId }: Props) {
       .then((result: UserCredential) => {
         setUser({
           user_id: result.user.uid,
-          user_name: `Anonymous_${result.user.uid.slice(0, 6)}`,
+          user_name: getAnonymousUserName(result.user.uid),
           photo_url: "",
           messaging_token: "", // TODO: get FCM token
         });
@@ -260,7 +261,9 @@ export default function Chatroom({ chatroomId }: Props) {
       if (user) {
         setUser({
           user_id: user.uid,
-          user_name: user.displayName || "",
+          user_name: user.isAnonymous
+            ? getAnonymousUserName(user.uid)
+            : user.displayName || "",
           photo_url: user.photoURL || "",
           messaging_token: "", // TODO: get FCM token
         });

@@ -2,7 +2,9 @@ import { addDoc, collection, GeoPoint } from "firebase/firestore";
 import { User } from "firebase/auth";
 import { db } from "@/libs/firebase/firebase";
 import { createAssistantId } from "@/helpers/common";
+import { getAnonymousUserName } from "@/helpers/user";
 import { DB_COLLECTION_PATH } from "@/constants/common";
+
 import type { Chatroom } from "@/types/chatroom";
 
 export const createChatroom = async (
@@ -28,7 +30,7 @@ export const createChatroom = async (
       {
         user_id: user.uid,
         user_name: user.isAnonymous
-          ? `Anonymous_${user.uid.slice(0, 6)}`
+          ? getAnonymousUserName(user.uid)
           : user.displayName || "",
         photo_url: user.photoURL || "",
         messaging_token: "", // TODO: get FCM token
