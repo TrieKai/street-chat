@@ -27,7 +27,9 @@ export const createChatroom = async (
     users: [
       {
         user_id: user.uid,
-        user_name: user.displayName || "",
+        user_name: user.isAnonymous
+          ? `Anonymous_${user.uid.slice(0, 6)}`
+          : user.displayName || "",
         photo_url: user.photoURL || "",
         messaging_token: "", // TODO: get FCM token
       },

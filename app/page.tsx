@@ -1,12 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signInAnonymously,
+  User,
+} from "firebase/auth";
 
 import { auth, provider } from "@/libs/firebase/firebase";
 import { createChatroom } from "@/helpers/chatroom";
 import { useRouter } from "next/navigation";
 import CreateChatroomModal from "@/app/components/CreateChatroomModal";
+import LoginDialog from "@/app/components/LoginDialog";
 import WarningModal from "@/app/components/WarningModal";
 import { useViewer } from "@/hooks/useViewer";
 
@@ -17,7 +23,9 @@ export default function Home() {
   const viewerContainerRef = useRef<HTMLDivElement>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isDistanceAlertOpen, setIsDistanceAlertOpen] = useState(false);
+  const [pendingChatroomName, setPendingChatroomName] = useState<string>();
 
   const { viewer, pendingLocation, setPendingLocation, createChatroomCube } =
     useViewer({
@@ -38,15 +46,9 @@ export default function Home() {
         });
 
         if (!user) {
-          await signInWithPopup(auth, provider);
-          // retry to create the chatroom after signing in
-          user = await new Promise<User | null>((resolve) => {
-            onAuthStateChanged(auth, (user) => resolve(user));
-          });
-
-          if (!user) {
-            return;
-          }
+          setPendingChatroomName(name);
+          setIsLoginModalOpen(true);
+          return;
         }
 
         const chatroomId = await createChatroom(
@@ -56,15 +58,48 @@ export default function Home() {
           user
         );
 
+        if (!chatroomId) {
+          return;
+        }
+
         createChatroomCube(chatroomId, name);
+        setPendingLocation(null);
         setIsModalOpen(false);
         router.push(`/${chatroomId}`);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error creating chatroom:", error);
       }
     },
-    [createChatroomCube, pendingLocation, router, viewer]
+    [pendingLocation, viewer, router, createChatroomCube, setPendingLocation]
   );
+
+  const handleGoogleLogin = useCallback(async (): Promise<void> => {
+    try {
+      await signInWithPopup(auth, provider);
+      if (pendingChatroomName) {
+        await handleCreateChatroom(pendingChatroomName);
+        setPendingChatroomName(undefined);
+      }
+    } catch (error: unknown) {
+      console.error("Google login failed:", error);
+    } finally {
+      setIsLoginModalOpen(false);
+    }
+  }, [pendingChatroomName, handleCreateChatroom, setPendingChatroomName]);
+
+  const handleAnonymousLogin = useCallback(async (): Promise<void> => {
+    try {
+      await signInAnonymously(auth);
+      if (pendingChatroomName) {
+        await handleCreateChatroom(pendingChatroomName);
+        setPendingChatroomName(undefined);
+      }
+    } catch (error: unknown) {
+      console.error("Anonymous login failed:", error);
+    } finally {
+      setIsLoginModalOpen(false);
+    }
+  }, [pendingChatroomName, handleCreateChatroom, setPendingChatroomName]);
 
   const handleCloseModal = useCallback((): void => {
     setIsModalOpen(false);
@@ -73,7 +108,9 @@ export default function Home() {
 
   useEffect(() => {
     if (viewer) {
-      void viewer.moveTo(IMAGE_ID).catch((error) => console.error(error));
+      void viewer
+        .moveTo(IMAGE_ID)
+        .catch((error: unknown) => console.error(error));
     }
   }, [viewer]);
 
@@ -84,6 +121,12 @@ export default function Home() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSubmit={handleCreateChatroom}
+      />
+      <LoginDialog
+        isLoginModalOpen={isLoginModalOpen}
+        setIsLoginModalOpen={setIsLoginModalOpen}
+        onGoogleLogin={handleGoogleLogin}
+        onAnonymousLogin={handleAnonymousLogin}
       />
       <WarningModal
         isOpen={isDistanceAlertOpen}

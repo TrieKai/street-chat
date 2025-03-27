@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { Button, Textarea } from "@headlessui/react";
 import { ArrowDown, CircleStop, SendHorizontal } from "lucide-react";
 import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
-import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signInAnonymously,
+  UserCredential,
+} from "firebase/auth";
 import { auth, db, provider } from "@/libs/firebase/firebase";
 import MessageBubble from "./Message";
 import LoginDialog from "@/app/components/LoginDialog";
@@ -62,7 +67,7 @@ export default function Chatroom({ chatroomId }: Props) {
     router.push("/");
   }, [handleUpdateMessageError, isLLMGenerating, router]);
 
-  const handleLogin = useCallback((): void => {
+  const handleGoogleLogin = useCallback((): void => {
     void signInWithPopup(auth, provider)
       .then((result) => {
         setUser({
@@ -73,8 +78,25 @@ export default function Chatroom({ chatroomId }: Props) {
         });
         setIsLoginModalOpen(false);
       })
-      .catch((error) => {
-        console.log(error);
+      .catch((error: Error) => {
+        console.error("Google login failed:", error);
+        setUser(null);
+      });
+  }, []);
+
+  const handleAnonymousLogin = useCallback((): void => {
+    void signInAnonymously(auth)
+      .then((result: UserCredential) => {
+        setUser({
+          user_id: result.user.uid,
+          user_name: `Anonymous_${result.user.uid.slice(0, 6)}`,
+          photo_url: "",
+          messaging_token: "", // TODO: get FCM token
+        });
+        setIsLoginModalOpen(false);
+      })
+      .catch((error: Error) => {
+        console.error("Anonymous login failed:", error);
         setUser(null);
       });
   }, []);
@@ -234,7 +256,7 @@ export default function Chatroom({ chatroomId }: Props) {
   );
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user): void => {
       if (user) {
         setUser({
           user_id: user.uid,
@@ -275,7 +297,7 @@ export default function Chatroom({ chatroomId }: Props) {
         chatroomName={chatroomName}
         handleBack={handleBack}
         user={user}
-        handleLogin={handleLogin}
+        handleLogin={handleGoogleLogin}
         handleLogout={handleLogout}
         handleClickSettings={() => setIsSettingsOpen(true)}
       />
@@ -333,7 +355,8 @@ export default function Chatroom({ chatroomId }: Props) {
       <LoginDialog
         isLoginModalOpen={isLoginModalOpen}
         setIsLoginModalOpen={setIsLoginModalOpen}
-        handleLogin={handleLogin}
+        onGoogleLogin={handleGoogleLogin}
+        onAnonymousLogin={handleAnonymousLogin}
       />
       <LLMSettingsDialog
         isOpen={isSettingsOpen}

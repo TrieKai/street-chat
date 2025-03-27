@@ -11,13 +11,15 @@ import {
 interface Props {
   isLoginModalOpen: boolean;
   setIsLoginModalOpen: (value: boolean) => void;
-  handleLogin: () => void;
+  onGoogleLogin: () => void;
+  onAnonymousLogin: () => void;
 }
 
 export default function LoginDialog({
   isLoginModalOpen,
   setIsLoginModalOpen,
-  handleLogin,
+  onGoogleLogin,
+  onAnonymousLogin,
 }: Props) {
   return (
     <Transition appear show={isLoginModalOpen} as={Fragment}>
@@ -58,16 +60,22 @@ export default function LoginDialog({
                 </DialogTitle>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
-                    請先登入以發送訊息。點擊下方按鈕使用 Google 帳號登入。
+                    請選擇登入方式以發送訊息：
                   </p>
                 </div>
 
-                <div className="mt-4 flex justify-end gap-2">
+                <div className="mt-4 flex flex-col gap-2">
                   <Button
                     className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                    onClick={handleLogin}
+                    onClick={onGoogleLogin}
                   >
                     使用 Google 登入
+                  </Button>
+                  <Button
+                    className="inline-flex justify-center rounded-md border border-transparent bg-yellow-100 px-4 py-2 text-sm font-medium text-yellow-900 hover:bg-yellow-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2"
+                    onClick={onAnonymousLogin}
+                  >
+                    匿名登入
                   </Button>
                   <Button
                     className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
