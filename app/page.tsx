@@ -8,6 +8,7 @@ import {
   User,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 
 import CreateChatroomModal from "@/app/components/CreateChatroomModal";
 import LoginDialog from "@/app/components/LoginDialog";
@@ -26,6 +27,7 @@ export default function Home() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isDistanceAlertOpen, setIsDistanceAlertOpen] = useState(false);
   const [pendingChatroomName, setPendingChatroomName] = useState<string>();
+  const [showTutorial, setShowTutorial] = useState(true);
 
   const { viewer, pendingLocation, setPendingLocation, createChatroomCube } =
     useViewer({
@@ -116,7 +118,20 @@ export default function Home() {
 
   return (
     <main className="w-full h-full">
-      <div ref={viewerContainerRef} className="w-full h-full" />
+      <div className="relative w-full h-full">
+        <div ref={viewerContainerRef} className="w-full h-full" />
+        {showTutorial && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/75 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-10">
+            <span>👆 點擊方塊進入聊天室，或點擊街景建立新聊天室</span>
+            <button
+              onClick={() => setShowTutorial(false)}
+              className="text-white/75 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
       <CreateChatroomModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
