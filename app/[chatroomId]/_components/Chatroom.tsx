@@ -198,7 +198,7 @@ export default function Chatroom({ chatroomId }: Props) {
   }, [webLLM]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         handleSendMessage(e);
@@ -206,6 +206,24 @@ export default function Chatroom({ chatroomId }: Props) {
     },
     [handleSendMessage]
   );
+
+  const handleGoogleLogin = useCallback(async (): Promise<void> => {
+    try {
+      await googleLogin();
+      setIsLoginModalOpen(false);
+    } catch (error: unknown) {
+      console.error("Google login failed:", error);
+    }
+  }, [googleLogin]);
+
+  const handleAnonymousLogin = useCallback(async (): Promise<void> => {
+    try {
+      await anonymousLogin();
+      setIsLoginModalOpen(false);
+    } catch (error: unknown) {
+      console.error("Anonymous login failed:", error);
+    }
+  }, [anonymousLogin]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -291,8 +309,8 @@ export default function Chatroom({ chatroomId }: Props) {
       <LoginDialog
         isLoginModalOpen={isLoginModalOpen}
         setIsLoginModalOpen={setIsLoginModalOpen}
-        onGoogleLogin={googleLogin}
-        onAnonymousLogin={anonymousLogin}
+        onGoogleLogin={handleGoogleLogin}
+        onAnonymousLogin={handleAnonymousLogin}
       />
       <LLMSettingsDialog
         isOpen={isSettingsOpen}

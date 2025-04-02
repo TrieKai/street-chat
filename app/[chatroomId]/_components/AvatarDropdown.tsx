@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import {
   Button,
   Menu,
@@ -11,14 +11,32 @@ import clsx from "clsx";
 import { VenetianMask } from "lucide-react";
 import HeadShot from "@/app/components/HeadShot";
 import LoginDialog from "@/app/components/LoginDialog";
-import { isAnonymousUser } from "@/helpers/user";
 import { useUserStore } from "@/app/store/userStore";
+import { isAnonymousUser } from "@/helpers/user";
 
 const HEAD_SHOT_SIZE = 32;
 
 export default function AvatarDropdown() {
   const { user, googleLogin, anonymousLogin, logout } = useUserStore();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  const handleGoogleLogin = useCallback(async (): Promise<void> => {
+    try {
+      await googleLogin();
+      setIsLoginModalOpen(false);
+    } catch (error: unknown) {
+      console.error("Google login failed:", error);
+    }
+  }, [googleLogin]);
+
+  const handleAnonymousLogin = useCallback(async (): Promise<void> => {
+    try {
+      await anonymousLogin();
+      setIsLoginModalOpen(false);
+    } catch (error: unknown) {
+      console.error("Anonymous login failed:", error);
+    }
+  }, [anonymousLogin]);
 
   return (
     <>
@@ -82,8 +100,8 @@ export default function AvatarDropdown() {
       <LoginDialog
         isLoginModalOpen={isLoginModalOpen}
         setIsLoginModalOpen={setIsLoginModalOpen}
-        onGoogleLogin={googleLogin}
-        onAnonymousLogin={anonymousLogin}
+        onGoogleLogin={handleGoogleLogin}
+        onAnonymousLogin={handleAnonymousLogin}
       />
     </>
   );
