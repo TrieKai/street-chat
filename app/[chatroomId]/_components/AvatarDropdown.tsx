@@ -12,24 +12,12 @@ import { VenetianMask } from "lucide-react";
 import HeadShot from "@/app/components/HeadShot";
 import LoginDialog from "@/app/components/LoginDialog";
 import { isAnonymousUser } from "@/helpers/user";
-
-import type { User } from "@/types/chatroom";
+import { useUserStore } from "@/app/store/userStore";
 
 const HEAD_SHOT_SIZE = 32;
 
-interface Props {
-  user: User | null;
-  handleGoogleLogin: () => void;
-  handleAnonymousLogin: () => void;
-  handleLogout: () => void;
-}
-
-export default function AvatarDropdown({
-  user,
-  handleGoogleLogin,
-  handleAnonymousLogin,
-  handleLogout,
-}: Props) {
+export default function AvatarDropdown() {
+  const { user, googleLogin, anonymousLogin, logout } = useUserStore();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   return (
@@ -69,7 +57,7 @@ export default function AvatarDropdown({
                         "group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-900",
                         focus && "bg-gray-100"
                       )}
-                      onClick={handleLogout}
+                      onClick={logout}
                     >
                       登出
                     </Button>
@@ -94,8 +82,8 @@ export default function AvatarDropdown({
       <LoginDialog
         isLoginModalOpen={isLoginModalOpen}
         setIsLoginModalOpen={setIsLoginModalOpen}
-        onGoogleLogin={handleGoogleLogin}
-        onAnonymousLogin={handleAnonymousLogin}
+        onGoogleLogin={googleLogin}
+        onAnonymousLogin={anonymousLogin}
       />
     </>
   );

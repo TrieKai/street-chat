@@ -5,13 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Textarea } from "@headlessui/react";
 import { ArrowDown, CircleStop, SendHorizontal } from "lucide-react";
 import { doc, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore";
-import {
-  onAuthStateChanged,
-  signInWithPopup,
-  signInAnonymously,
-  UserCredential,
-} from "firebase/auth";
-import { auth, db, provider } from "@/libs/firebase/firebase";
+import { db } from "@/libs/firebase/firebase";
 import MessageBubble from "./Message";
 import LoginDialog from "@/app/components/LoginDialog";
 import ChatroomHeader from "./ChatroomHeader";
@@ -19,8 +13,8 @@ import { useWebLLM } from "@/hooks/useWebLLM";
 import { useBeforeUnload } from "@/hooks/useBeforeUnload";
 import LLMSettingsDialog from "@/app/components/LLMSettingsDialog";
 import { useLLMConfigStore } from "@/app/store/llmConfigStore";
+import { useUserStore } from "@/app/store/userStore";
 import { createAssistantId, isAssistantId } from "@/helpers/common";
-import { getAnonymousUserName } from "@/helpers/user";
 import {
   getRemoteChatroomMessages,
   updateLocalBotMessage,
@@ -39,7 +33,6 @@ export default function Chatroom({ chatroomId }: Props) {
   const [chatroomName, setChatroomName] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [newUserMessage, setNewUserMessage] = useState("");
-  const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLLMGenerating, setIsLLMGenerating] = useState(false);
@@ -50,6 +43,7 @@ export default function Chatroom({ chatroomId }: Props) {
 
   const { webLLM, chat } = useWebLLM();
   const { llmConfig } = useLLMConfigStore();
+  const { user, googleLogin, anonymousLogin } = useUserStore();
   const { handleUpdateMessageError } = useBeforeUnload({
     chatroomId,
     messageId: messages.find((msg) => msg.isGenerating)?.id,
@@ -67,49 +61,6 @@ export default function Chatroom({ chatroomId }: Props) {
     }
     router.push("/");
   }, [handleUpdateMessageError, isLLMGenerating, router]);
-
-  const handleGoogleLogin = useCallback((): void => {
-    void signInWithPopup(auth, provider)
-      .then((result) => {
-        setUser({
-          user_id: result.user.uid,
-          user_name: result.user.displayName || "",
-          photo_url: result.user.photoURL || "",
-          messaging_token: "", // TODO: get FCM token
-        });
-        setIsLoginModalOpen(false);
-      })
-      .catch((error: Error) => {
-        console.error("Google login failed:", error);
-        setUser(null);
-      });
-  }, []);
-
-  const handleAnonymousLogin = useCallback((): void => {
-    void signInAnonymously(auth)
-      .then((result: UserCredential) => {
-        setUser({
-          user_id: result.user.uid,
-          user_name: getAnonymousUserName(result.user.uid),
-          photo_url: "",
-          messaging_token: "", // TODO: get FCM token
-        });
-        setIsLoginModalOpen(false);
-      })
-      .catch((error: Error) => {
-        console.error("Anonymous login failed:", error);
-        setUser(null);
-      });
-  }, []);
-
-  const handleLogout = useCallback(async (): Promise<void> => {
-    try {
-      await auth.signOut();
-      router.refresh();
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  }, [router]);
 
   const scrollToBottom = useCallback((): void => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -257,38 +208,23 @@ export default function Chatroom({ chatroomId }: Props) {
   );
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user): void => {
-      if (user) {
-        setUser({
-          user_id: user.uid,
-          user_name: user.isAnonymous
-            ? getAnonymousUserName(user.uid)
-            : user.displayName || "",
-          photo_url: user.photoURL || "",
-          messaging_token: "", // TODO: get FCM token
-        });
-      } else {
-        setUser(null);
-      }
-    });
-
-    const unsubscribeMessages = onSnapshot(
+    const unsubscribe = onSnapshot(
       doc(db, "chatrooms", chatroomId),
-      (doc) => {
-        if (doc.exists()) {
-          const data = doc.data();
-          setMessages(data.messages || []);
-          setUsers(data.users || []);
-          setChatroomName(data.name || "Chat Room");
+      async (doc) => {
+        if (!doc.exists()) {
+          router.replace("/");
+          return;
         }
+
+        const data = doc.data();
+        setChatroomName(data.name);
+        setMessages(await getRemoteChatroomMessages(chatroomId));
+        setUsers(data.users);
       }
     );
 
-    return () => {
-      unsubscribeAuth();
-      unsubscribeMessages();
-    };
-  }, [chatroomId]);
+    return () => unsubscribe();
+  }, [chatroomId, router]);
 
   useEffect(() => {
     scrollToBottom();
@@ -299,11 +235,7 @@ export default function Chatroom({ chatroomId }: Props) {
       <ChatroomHeader
         chatroomName={chatroomName}
         handleBack={handleBack}
-        user={user}
         handleClickSettings={() => setIsSettingsOpen(true)}
-        handleGoogleLogin={handleGoogleLogin}
-        handleAnonymousLogin={handleAnonymousLogin}
-        handleLogout={handleLogout}
       />
 
       <div className="flex-1 overflow-y-auto p-4" onScroll={handleScroll}>
@@ -359,8 +291,8 @@ export default function Chatroom({ chatroomId }: Props) {
       <LoginDialog
         isLoginModalOpen={isLoginModalOpen}
         setIsLoginModalOpen={setIsLoginModalOpen}
-        onGoogleLogin={handleGoogleLogin}
-        onAnonymousLogin={handleAnonymousLogin}
+        onGoogleLogin={googleLogin}
+        onAnonymousLogin={anonymousLogin}
       />
       <LLMSettingsDialog
         isOpen={isSettingsOpen}

@@ -1,26 +1,17 @@
 import { ChevronLeft, Settings } from "lucide-react";
 import { Button } from "@headlessui/react";
 import AvatarDropdown from "./AvatarDropdown";
-import type { User } from "@/types/chatroom";
 
 interface Props {
   chatroomName: string;
   handleBack: () => void;
-  user: User | null;
   handleClickSettings: () => void;
-  handleGoogleLogin: () => void;
-  handleAnonymousLogin: () => void;
-  handleLogout: () => void;
 }
 
 export default function ChatroomHeader({
   chatroomName,
   handleBack,
-  user,
   handleClickSettings,
-  handleGoogleLogin,
-  handleAnonymousLogin,
-  handleLogout,
 }: Props) {
   return (
     <header className="bg-white shadow-sm px-4 py-2 flex items-center justify-between">
@@ -40,12 +31,7 @@ export default function ChatroomHeader({
         >
           <Settings className="w-5 h-5" />
         </Button>
-        <AvatarDropdown
-          user={user}
-          handleGoogleLogin={handleGoogleLogin}
-          handleAnonymousLogin={handleAnonymousLogin}
-          handleLogout={handleLogout}
-        />
+        <AvatarDropdown />
       </div>
     </header>
   );
