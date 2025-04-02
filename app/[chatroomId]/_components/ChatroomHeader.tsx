@@ -8,7 +8,8 @@ interface Props {
   handleBack: () => void;
   user: User | null;
   handleClickSettings: () => void;
-  handleLogin: () => void;
+  handleGoogleLogin: () => void;
+  handleAnonymousLogin: () => void;
   handleLogout: () => void;
 }
 
@@ -17,7 +18,8 @@ export default function ChatroomHeader({
   handleBack,
   user,
   handleClickSettings,
-  handleLogin,
+  handleGoogleLogin,
+  handleAnonymousLogin,
   handleLogout,
 }: Props) {
   return (
@@ -40,7 +42,8 @@ export default function ChatroomHeader({
         </Button>
         <AvatarDropdown
           user={user}
-          handleLogin={handleLogin}
+          handleGoogleLogin={handleGoogleLogin}
+          handleAnonymousLogin={handleAnonymousLogin}
           handleLogout={handleLogout}
         />
       </div>

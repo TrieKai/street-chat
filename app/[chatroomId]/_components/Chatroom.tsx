@@ -300,9 +300,10 @@ export default function Chatroom({ chatroomId }: Props) {
         chatroomName={chatroomName}
         handleBack={handleBack}
         user={user}
-        handleLogin={handleGoogleLogin}
-        handleLogout={handleLogout}
         handleClickSettings={() => setIsSettingsOpen(true)}
+        handleGoogleLogin={handleGoogleLogin}
+        handleAnonymousLogin={handleAnonymousLogin}
+        handleLogout={handleLogout}
       />
 
       <div className="flex-1 overflow-y-auto p-4" onScroll={handleScroll}>
