@@ -7,10 +7,13 @@
 
 A real-time 3D street communication platform that allows users to chat and interact in a virtual street environment.
 
+![Street Chat Demo](public/demo.png)
+
 ## Features
 
 - 🌍 Real-time 3D street view chat rooms
 - 💬 Real-time messaging with Firebase
+- 👤 Anonymous chat mode
 - 🤖 Local AI chat powered by WebGPU acceleration
 - 🧠 On-device LLM inference with web-llm
 - 📱 PWA support for mobile devices
@@ -24,6 +27,13 @@ A real-time 3D street communication platform that allows users to chat and inter
 - 🔒 Privacy-focused: all processing happens locally
 - 📥 One-time model download
 - ⚡ No server calls needed for AI responses
+
+## Anonymous Chat Features
+
+- 🎭 No login required for quick access
+- 🔄 Randomly generated avatar and username
+- 💫 Seamless transition between anonymous and logged-in modes
+- 🤝 Join any public chat room anonymously
 
 ## Tech Stack
 
