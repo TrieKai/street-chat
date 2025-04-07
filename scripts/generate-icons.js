@@ -2,7 +2,7 @@ const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 
-const sizes = [192, 512];
+const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
 const inputFile = path.join(__dirname, "../public/street-chat.png");
 const outputDir = path.join(__dirname, "../public/icons");
 
